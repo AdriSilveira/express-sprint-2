@@ -154,6 +154,32 @@ const buildYearsSelectSql = (id, variant) => {
   return sql;
 };
 
+//Build Groups ----------HERE-------------HERE-----------------
+const buildGroupsSelecetSql = (id, variant) => {
+  let table = "Groups";
+  let fields = ["GroupID", "GroupName", "GroupAssessmentID", "GroupModuleName"];
+  let sql = "";
+
+  switch (variant) {
+    default:
+      sql = `SELECT ${fields} FROM ${table}`;
+      if (id) sql += `WHERE GroupID=${id}`;
+  }
+  return sql;
+};
+
+const getGroupsController = async (res, id, variant) => {
+  //Validate reques
+
+  // Access data
+  const sql = buildGroupsSelectSql(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(sql);
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
+
 const createModulemembers = async (sql, record) => {
   try {
     const status = await database.query(sql, record);
@@ -350,6 +376,12 @@ app.get("/api/users/staff", (req, res) =>
 );
 app.get("/api/users/groups/:id", (req, res) =>
   getUsersController(res, req.params.id, "groups")
+);
+
+//Groups
+app.get("/api/groups", (req, res) => getGroupsController(res, null, null));
+app.get("/api/groups/:id", (req, res) =>
+  getGroupsController(res, req.params.id, null)
 );
 
 // Years
