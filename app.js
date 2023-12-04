@@ -21,7 +21,7 @@ app.use(function (req, res, next) {
   next();
 });
 //Controllers-------------------------------------=============================================
-const createModule = async (sql, recover) => {
+const createModule = async (sql, record) => {
   try {
     const status = await database.query(sql, record);
 
@@ -43,7 +43,7 @@ const createModule = async (sql, recover) => {
     return {
       isSuccess: false,
       result: null,
-      message: `Failed to execute query: ${error.message}`,
+      message: `Failed to execute query 1: ${error.message}`,
     };
   }
 };
@@ -70,14 +70,16 @@ const createUsersModule = async (sql, recover) => {
     return {
       isSuccess: false,
       result: null,
-      message: `Failed to execute query: ${error.message}`,
+      message: `Failed to execute query 2: ${error.message}`,
     };
   }
 };
 
 const read = async (sql) => {
   try {
+    console.log(`sql=[${sql}]`);
     const [result] = await database.query(sql);
+    console.log(`result=[${result.length}]`);
     return result.length === 0
       ? { isSuccess: false, result: null, message: "No records(s) found" }
       : { isSuccess: true, result: result, message: "Record(s) found" };
@@ -85,7 +87,7 @@ const read = async (sql) => {
     return {
       isSuccess: false,
       result: null,
-      message: `Failed to execute query: ${error.message}`,
+      message: `Failed to execute query 3: ${error.message}`,
     };
   }
 };
@@ -106,29 +108,15 @@ const buildModulesInsertSql = (record) => {
     "moduleYearID",
     "moduleLeaderID",
     "moduleImageURL",
+    "moduleLeaderName",
   ];
   return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
 };
 
-//   switch (variant) {
-//     case "leader":
-//       sql = `SELECT ${fields} FROM ${table} WHERE ModuleLeaderID=${id}`;
-//       break;
-//     case "users":
-//       const extendedTable = `UserModule INNER JOIN ${table} ON UserModule.UserModulemoduleID=Modules.moduleID`;
-//       sql = `SELECT ${fields} FROM ${extendedTable} WHERE UserModuleuserID=${id}`;
-//       break;
-//     default:
-//       sql = `SELECT ${fields} FROM ${table}`;
-//       if (id) sql += ` WHERE ModuleID=${id}`;
-//   }
-//   return sql;
-// };
-
 const buildModulesSelectSql = (id, variant) => {
   let sql = "";
   const table =
-    "(Modules LET JOIN Users ON Modules.ModuleLeaderID=Users.userID)";
+    "(Modules LEFT JOIN Users ON Modules.moduleLeaderID=Users.userID)";
   const fields = [
     "moduleID",
     "moduleName",
@@ -141,11 +129,11 @@ const buildModulesSelectSql = (id, variant) => {
   ];
   switch (variant) {
     case "leader":
-      sql = `SELECT ${fields} FROM ${table} WHERE ModuleLeaderID=${id}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE moduleLeaderID=${id}`;
       break;
     case "users":
-      const extendedTable = `UserModule INNER JOIN ${table} ON UserModule.UserModulemoduleID=Modules.moduleID`;
-      sql = `SELECT ${fields} FROM ${extendedTable} WHERE UserModuleuserID=${id}`;
+      const extendedTable = `UserModule INNER JOIN ${table} ON UserModule.moduleID=moduleID`;
+      sql = `SELECT ${fields} FROM ${extendedTable} WHERE userID=${id}`;
       break;
     default:
       sql = `SELECT ${fields} FROM ${table}`;
@@ -155,17 +143,21 @@ const buildModulesSelectSql = (id, variant) => {
 };
 
 const getmodulesController = async (req, res, variant) => {
-  const id = req.params.id; //undefined in the case of the /api/modules/endpoint
+  console.log("getmodulesController");
+  const id = req.params.id; //undefined in the case of the /api/modules endpoint
+  console.log(`id=[${id}]`);
   //Access data
   const sql = buildModulesSelectSql(id, variant);
+  console.log(`sql=[${sql}]`);
   const { isSuccess, result, message } = await read(sql);
+  console.log(`isSuccess=[${isSuccess}]`);
   if (!isSuccess) return res.status(404).json({ message });
 
   //Responses
   res.status(200).json(result);
 };
 //=================Insert============POST===========
-const postUserModulesController = async (rec, res) => {
+const postUserModulesController = async (req, res) => {
   //Validate request
 
   //Access data
@@ -197,7 +189,7 @@ const postmodulesController = async (req, res) => {
 const buildUsersSelectSql = (id, variant) => {
   let sql = "";
   const table =
-    "(Users LEFT JOIN UserType ON UserUserTypeID=UserTypeID) LEFT JOIN Years on UserYearID=YearID)";
+    "(Users LEFT JOIN UserType ON Users.UserTypeID=UserType.UserTypeID) LEFT JOIN Years ON Users.UserYearID=Years.YearID";
   const fields = [
     "userID",
     "userFirstName",
@@ -207,6 +199,7 @@ const buildUsersSelectSql = (id, variant) => {
     "userYearID",
     "userRole",
     "userYearName",
+    "userImageURL",
     ,
   ];
   switch (variant) {
@@ -251,6 +244,7 @@ app.get("/api/modules/users/:id", (req, res) =>
 
 //Post
 app.post("/api/usermodule", postUserModulesController);
+
 app.post("/api/modules", postmodulesController);
 
 //Users
