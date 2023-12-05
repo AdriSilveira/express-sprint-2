@@ -22,7 +22,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-//Controllers-------------------------------------=============================================
+// Controllers -----------------------------------
 const buildSetFields = (fields) =>
   fields.reduce(
     (setSQL, field, index) =>
@@ -60,7 +60,7 @@ const buildModulemembersSelectSql = (id, variant) => {
     "moduleID",
     'CONCAT(moduleCode," ",moduleName) AS moduleName',
     "userID",
-    'CONCAT(userFirstName," ",userLastname) AS userName',
+    'CONCAT(userFirstName," ",userLastName) AS userName',
   ];
   let sql = "";
   console.log("Here PPPPP");
