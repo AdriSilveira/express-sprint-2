@@ -123,15 +123,35 @@ const buildUsersSelectSql = (id, variant) => {
   ];
   let sql = "";
 
-  const STAFF = 1; // Primary key for staff type in Unibase Usertypes table
-  const STUDENT = 2; // Primary key for student type in Unibase Usertypes table
-
+  const Student = 1; // Primary key for student type in my database
+  const Staff = 2; // Primary key for staff
+  const Lecturer = 3; // Primary key for lecturer type in my database
+  const Professor = 4;
+  const Academic_Mentor = 6;
+  const Module_Leader = 7;
+  //const Admin = 5; DELETED
   switch (variant) {
     case "student":
-      sql = `SELECT ${fields} FROM ${table} WHERE usertypeID=${STUDENT}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE usertypeID=${Student}`;
       break;
     case "staff":
-      sql = `SELECT ${fields} FROM ${table} WHERE usertypeID=${STAFF}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE usertypeID=${Staff}`;
+      break;
+    case "lecturer":
+      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Lecturer}`;
+      break;
+    case "professor":
+      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Professor}`;
+      break;
+    case "mentor":
+      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Academic_Mentor}`;
+      break;
+    case "leader":
+      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Module_Leader}`;
+      break;
+
+    case "admin":
+      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Admin}`;
       break;
     case "groups":
       table = `GroupMembers INNER JOIN ${table} ON GroupMembers.groupMemberID=Users.UserID`;
@@ -288,6 +308,7 @@ const getModulemembersController = async (res, id, variant) => {
   // Response to request
   res.status(200).json(result);
 };
+//=============GETMODULESCONTROLLER=============
 
 const getModulesController = async (res, id, variant) => {
   // Validate request
@@ -343,8 +364,9 @@ const getYearsController = async (res, id, variant) => {
 
 // Endpoints -------------------------------------
 // Modulemembers
-app.get("/api/modulemembers", (req, res) =>
-  getModulemembersController(res, null, null)
+app.get(
+  "/api/modulemembers",
+  (req, res) => getModulemembersController(res, null, null) //nedd to change this two I think
 );
 app.get("/api/modulemembers/:id", (req, res) =>
   getModulemembersController(res, req.params.id, null)
@@ -377,9 +399,25 @@ app.get("/api/users/student", (req, res) =>
 app.get("/api/users/staff", (req, res) =>
   getUsersController(res, null, "staff")
 );
+app.get("/api/users/lecturer", (req, res) =>
+  getUsersController(res, null, "lecturer")
+);
+app.get("/api/users/professor", (req, res) =>
+  getUsersController(res, null, "professor")
+);
+app.get("/api/users/admin", (req, res) =>
+  getUsersController(res, null, "admin")
+);
+app.get("/api/users/mentor", (req, res) =>
+  getUsersController(res, null, "mentor")
+);
+app.get("/api/users/leader", (req, res) =>
+  getUsersController(res, null, "leader")
+);
 app.get("/api/users/groups/:id", (req, res) =>
   getUsersController(res, req.params.id, "groups")
 );
+
 //Groups
 app.get("/api/groups", (req, res) => getGroupsController(res, null, null));
 app.get("/api/groups/:id", (req, res) =>
