@@ -115,11 +115,10 @@ const buildUsersSelectSql = (id, variant) => {
     "userEmail",
     "userLevel",
     "userYearID",
-    "userTypeID",
     // "UserYearName",
     "userImageURL",
-    // "UsertypeName AS UserUsertypeName",
-    // "YearName AS UserYearName",
+    "userType",
+    // "yearName AS UserYearName",
   ];
   let sql = "";
 
@@ -132,10 +131,10 @@ const buildUsersSelectSql = (id, variant) => {
   //const Admin = 5; DELETED
   switch (variant) {
     case "student":
-      sql = `SELECT ${fields} FROM ${table} WHERE usertypeID=${Student}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Student}`;
       break;
     case "staff":
-      sql = `SELECT ${fields} FROM ${table} WHERE usertypeID=${Staff}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Staff}`;
       break;
     case "lecturer":
       sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Lecturer}`;
@@ -154,7 +153,7 @@ const buildUsersSelectSql = (id, variant) => {
       sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Admin}`;
       break;
     case "groups":
-      table = `GroupMembers INNER JOIN ${table} ON GroupMembers.groupMemberID=Users.UserID`;
+      table = `GroupMembers INNER JOIN ${table} ON GroupMembers.groupMemberID=Users.userID`;
       sql = `SELECT ${fields} FROM ${table} WHERE groupID=${id}`;
       break;
     default:
@@ -297,17 +296,17 @@ const postModulemembersController = async (req, res) => {
   res.status(201).json(result);
 };
 
-const getModulemembersController = async (res, id, variant) => {
-  // Validate request
+// const getModulemembersController = async (res, id, variant) => {
+//   // Validate request
 
-  // Access data
-  const sql = buildModulemembersSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
-  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+//   // Access data
+//   const sql = buildModulemembersSelectSql(id, variant);
+//   const { isSuccess, result, message: accessorMessage } = await read(sql);
+//   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
-  // Response to request
-  res.status(200).json(result);
-};
+//   // Response to request
+//   res.status(200).json(result);
+// };
 //=============GETMODULESCONTROLLER=============
 
 const getModulesController = async (res, id, variant) => {
@@ -350,22 +349,22 @@ const getUsersController = async (res, id, variant) => {
   res.status(200).json(result);
 };
 
-const getYearsController = async (res, id, variant) => {
-  // Validate request
+// const getYearsController = async (res, id, variant) => {
+//   // Validate request
 
-  // Access data
-  const sql = buildYearsSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
-  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+//   // Access data
+//   const sql = buildYearsSelectSql(id, variant);
+//   const { isSuccess, result, message: accessorMessage } = await read(sql);
+//   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
-  // Response to request
-  res.status(200).json(result);
-};
+//   // Response to request
+//   res.status(200).json(result);
+// };
 
 // Endpoints -------------------------------------
-// Modulemembers
+// UserModule
 app.get(
-  "/api/modulemembers",
+  "/api/usermodule",
   (req, res) => getModulemembersController(res, null, null) //nedd to change this two I think
 );
 app.get("/api/modulemembers/:id", (req, res) =>
