@@ -296,17 +296,17 @@ const postModulemembersController = async (req, res) => {
   res.status(201).json(result);
 };
 
-// const getModulemembersController = async (res, id, variant) => {
-//   // Validate request
+const getModulemembersController = async (res, id, variant) => {
+  // Validate request
 
-//   // Access data
-//   const sql = buildModulemembersSelectSql(id, variant);
-//   const { isSuccess, result, message: accessorMessage } = await read(sql);
-//   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+  // Access data
+  const sql = buildModulemembersSelectSql(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(sql);
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
-//   // Response to request
-//   res.status(200).json(result);
-// };
+  // Response to request
+  res.status(200).json(result);
+};
 //=============GETMODULESCONTROLLER=============
 
 const getModulesController = async (res, id, variant) => {
@@ -349,22 +349,22 @@ const getUsersController = async (res, id, variant) => {
   res.status(200).json(result);
 };
 
-// const getYearsController = async (res, id, variant) => {
-//   // Validate request
+const getYearsController = async (res, id, variant) => {
+  // Validate request
 
-//   // Access data
-//   const sql = buildYearsSelectSql(id, variant);
-//   const { isSuccess, result, message: accessorMessage } = await read(sql);
-//   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+  // Access data
+  const sql = buildYearsSelectSql(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(sql);
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
-//   // Response to request
-//   res.status(200).json(result);
-// };
+  // Response to request
+  res.status(200).json(result);
+};
 
 // Endpoints -------------------------------------
-// UserModule
+// Modulemembers
 app.get(
-  "/api/usermodule",
+  "/api/modulemembers",
   (req, res) => getModulemembersController(res, null, null) //nedd to change this two I think
 );
 app.get("/api/modulemembers/:id", (req, res) =>
