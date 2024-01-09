@@ -30,13 +30,32 @@ const buildSetFields = (fields) =>
     "SET "
   );
 
-const buildModulemembersInsertSql = (record) => {
+const buildModulesUpdateSql = () => {
+  let table = "Modules";
+  let mutableFields = [
+    "moduleID",
+    "moduleName",
+    "moduleCode",
+    "moduleLevel",
+    "moduleYearID",
+    "moduleLeaderID",
+    "moduleImageURL",
+  ];
+
+  return (
+    `UPDATE ${table} ` +
+    buildSetFields(mutableFields) +
+    `WHERE ModuleID=:ModuleID`
+  );
+};
+
+const buildModulemembersInsertSql = () => {
   let table = "UserModule";
   let mutableFields = ["userModuleID", "userID", "moduleID"];
   return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
 };
 
-const buildModulesInsertSql = (record) => {
+const buildModulesInsertSql = () => {
   let table = "Modules";
   let mutableFields = [
     "moduleID",
@@ -54,9 +73,9 @@ console.log("Here");
 //=========here to fix?============
 const buildModulemembersSelectSql = (id, variant) => {
   let table =
-    "((UserModule LEFT JOIN Users ON userID) LEFT JOIN Modules ON UserModule=moduleID )";
+    "(UserModule LEFT JOIN Users ON UserModule.userID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
   let fields = [
-    //"module",
+    "userModuleID",
     "moduleID",
     'CONCAT(moduleCode," ",moduleName) AS moduleName',
     "userID",
@@ -75,7 +94,7 @@ const buildModulemembersSelectSql = (id, variant) => {
 
 const buildModulesSelectSql = (id, variant) => {
   let table =
-    "((Modules LEFT JOIN Users ON moduleLeaderID=userID) LEFT JOIN Years ON moduleYearID=yearID )";
+    "((Modules LEFT JOIN Users ON moduleLeaderID=userID) LEFT JOIN Years ON moduleYearID=yearID)";
   let fields = [
     "moduleID",
     "moduleName",
@@ -116,9 +135,10 @@ const buildUsersSelectSql = (id, variant) => {
     "userLevel",
     "userYearID",
     // "UserYearName",
+    "userTypeID",
     "userImageURL",
-    "userType",
-    // "yearName AS UserYearName",
+    // Specify the table alias for userTypeID
+    "CONCAT(userFirstName, ' ', userLastName) AS userName, UserType.userTypeID", //added last
   ];
   let sql = "";
 
@@ -178,7 +198,7 @@ const buildYearsSelectSql = (id, variant) => {
   return sql;
 };
 //Build Groups ----------HERE-------------HERE-----------------
-const buildGroupsSelecetSql = (id, variant) => {
+const buildGroupsSelectSql = (id, variant) => {
   let table = "Groups";
   let fields = [
     "groupID",
@@ -216,6 +236,34 @@ const createModulemembers = async (sql, record) => {
       status[0].insertId,
       null
     );
+
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record successfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover the inserted record: ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+
+const UpdateModules = async (sql, id, record) => {
+  try {
+    const status = await database.query(sql, { ...record, ModuleID: id });
+
+    const recoverRecordSql = buildModulesSelectSql(status[0].insertId, null);
 
     const { isSuccess, result, message } = await read(recoverRecordSql);
 
@@ -290,7 +338,7 @@ const postModulemembersController = async (req, res) => {
   // Validate request
 
   // Access data
-  const sql = buildModulemembersInsertSql(req.body);
+  const sql = buildModulemembersInsertSql();
   const {
     isSuccess,
     result,
@@ -314,24 +362,12 @@ const getModulemembersController = async (res, id, variant) => {
   res.status(200).json(result);
 };
 //=============GETMODULESCONTROLLER=============
-
-const getModulesController = async (res, id, variant) => {
-  // Validate request
-
-  // Access data
-  const sql = buildModulesSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
-  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
-
-  // Response to request
-  res.status(200).json(result);
-};
 //POST MODULE CONTROLLER-----------------------------------------
 const postModulesController = async (req, res) => {
   // Validate request
 
   // Access data
-  const sql = buildModulesInsertSql(req.body);
+  const sql = buildModulesInsertSql();
   const {
     isSuccess,
     result,
@@ -343,11 +379,43 @@ const postModulesController = async (req, res) => {
   res.status(201).json(result);
 };
 
+//------------------------PUT MOdules controller--------------------------
+
+const putModulesController = async (req, res) => {
+  // Validate request
+  const id = req.params.id;
+  const record = req.body;
+
+  // Access data
+  const sql = buildModulesUpdateSql();
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await UpdateModules(sql, id, record);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
+
 const getUsersController = async (res, id, variant) => {
   // Validate request
 
   // Access data
   const sql = buildUsersSelectSql(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(sql);
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
+
+const getModulesController = async (res, id, variant) => {
+  // Validate request
+
+  // Access data
+  const sql = buildModulesSelectSql(id, variant);
   const { isSuccess, result, message: accessorMessage } = await read(sql);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
@@ -391,7 +459,10 @@ app.get("/api/modules/users/:id", (req, res) =>
 
 //Post Modules===================Post Modules==========================here======================================
 app.post("/api/modules", postModulesController);
-app.post("/api/modulemembers", postModulemembersController);
+// app.post("/api/modulemembers", postModulemembersController);
+
+//PUT or UPDATE
+app.put("/api/modules/:id", putModulesController);
 
 // Users
 app.get("/api/users", (req, res) => getUsersController(res, null, null));
