@@ -47,7 +47,7 @@ const buildModulesInsertSql = (record) => {
     "moduleLeaderID",
     "moduleImageURL",
   ];
-  console.log("where is not working?");
+
   return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
 };
 console.log("Here");
@@ -72,7 +72,7 @@ const buildModulemembersSelectSql = (id, variant) => {
   }
   return sql;
 };
-console.log("Here BBBBB");
+
 const buildModulesSelectSql = (id, variant) => {
   let table =
     "((Modules LEFT JOIN Users ON moduleLeaderID=userID) LEFT JOIN Years ON moduleYearID=yearID )";
@@ -149,9 +149,9 @@ const buildUsersSelectSql = (id, variant) => {
       sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Module_Leader}`;
       break;
 
-    case "admin":
-      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Admin}`;
-      break;
+    // case "admin":
+    //   sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Admin}`;
+    //   break;
     case "groups":
       table = `GroupMembers INNER JOIN ${table} ON GroupMembers.groupMemberID=Users.userID`;
       sql = `SELECT ${fields} FROM ${table} WHERE groupID=${id}`;
@@ -166,7 +166,7 @@ const buildUsersSelectSql = (id, variant) => {
 
 const buildYearsSelectSql = (id, variant) => {
   let table = "Years";
-  let fields = ["yearID", "yearName"];
+  let fields = ["yearID", "yearName", "yearStart", "yearEnd"];
   let sql = "";
 
   switch (variant) {
@@ -180,7 +180,13 @@ const buildYearsSelectSql = (id, variant) => {
 //Build Groups ----------HERE-------------HERE-----------------
 const buildGroupsSelecetSql = (id, variant) => {
   let table = "Groups";
-  let fields = ["groupID", "groupName", "groupModuleName"];
+  let fields = [
+    "groupID",
+    "groupName",
+    "groupModuleName",
+    "assessmentID",
+    "currentGrade",
+  ];
   let sql = "";
 
   switch (variant) {
