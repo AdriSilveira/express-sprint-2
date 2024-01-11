@@ -43,9 +43,10 @@ const buildModulesUpdateSql = () => {
   ];
 
   return (
+    // "UPDATE Modules "
     `UPDATE ${table} ` +
     buildSetFields(mutableFields) +
-    `WHERE ModuleID=:ModuleID`
+    ` WHERE moduleID=:moduleID`
   );
 };
 
@@ -276,7 +277,7 @@ const UpdateModules = async (sql, id, record) => {
       : {
           isSuccess: false,
           result: null,
-          message: `Failed to recover the inserted record: ${message}`,
+          message: `Failed to recover the updated record: ${message}`,
         };
   } catch (error) {
     return {
@@ -388,6 +389,7 @@ const putModulesController = async (req, res) => {
 
   // Access data
   const sql = buildModulesUpdateSql();
+  console.log(sql);
   const {
     isSuccess,
     result,
