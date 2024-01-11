@@ -33,7 +33,7 @@ const buildSetFields = (fields) =>
 const buildModulesUpdateSql = () => {
   let table = "Modules";
   let mutableFields = [
-    "moduleID",
+    // "moduleID",
     "moduleName",
     "moduleCode",
     "moduleLevel",
@@ -263,7 +263,7 @@ const UpdateModules = async (sql, id, record) => {
   try {
     const status = await database.query(sql, { ...record, ModuleID: id });
 
-    const recoverRecordSql = buildModulesSelectSql(status[0].insertId, null);
+    const recoverRecordSql = buildModulesSelectSql(id, null);
 
     const { isSuccess, result, message } = await read(recoverRecordSql);
 
