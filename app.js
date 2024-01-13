@@ -2,7 +2,7 @@
 import express from "express";
 import cors from "cors";
 import database from "./database.js";
-
+//====================CHANGES HERE UPDATED THE PUT/UPDATE STATUS ==================
 // Configure express app -------------------------
 const app = new express();
 
@@ -30,10 +30,16 @@ const buildSetFields = (fields) =>
     "SET "
   );
 
+const buildModulesDeleteSql = () => {
+  let table = "Modules";
+  return `DELETE FROM  ${table} 
+      WHERE moduleID=:moduleID`;
+};
+
 const buildModulesUpdateSql = () => {
   let table = "Modules";
   let mutableFields = [
-    // "moduleID",
+    // "moduleID",REMOVE NOT NEEDED
     "moduleName",
     "moduleCode",
     "moduleLevel",
@@ -135,7 +141,6 @@ const buildUsersSelectSql = (id, variant) => {
     "userEmail",
     "userLevel",
     "userYearID",
-    // "UserYearName",
     "userTypeID",
     "userImageURL",
     // Specify the table alias for userTypeID
@@ -217,6 +222,7 @@ const buildGroupsSelectSql = (id, variant) => {
   }
   return sql;
 };
+
 const getGroupsController = async (res, id, variant) => {
   //Validate reques
 
@@ -260,25 +266,42 @@ const createModulemembers = async (sql, record) => {
   }
 };
 
+const deleteModules = async (sql, id) => {
+  try {
+    const status = await database.query(sql, { ModuleID: id });
+    return status[0].affectedRows === 0
+      ? {
+          isSuccess: false,
+          result: null,
+          message: `Failed to delete record: ${id}`,
+        }
+      : {
+          isSuccess: true,
+          result: null,
+          message: "Record successfully deleted",
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+
 const UpdateModules = async (sql, id, record) => {
   try {
     const status = await database.query(sql, { ...record, ModuleID: id });
 
+    if (status[0].affectRows === 0)
+      return {
+        isSuccess: false,
+        result: null,
+        message: "Failed to update record: no rows affected",
+      };
     const recoverRecordSql = buildModulesSelectSql(id, null);
 
     const { isSuccess, result, message } = await read(recoverRecordSql);
-
-    return isSuccess
-      ? {
-          isSuccess: true,
-          result: result,
-          message: "Record successfully recovered",
-        }
-      : {
-          isSuccess: false,
-          result: null,
-          message: `Failed to recover the updated record: ${message}`,
-        };
   } catch (error) {
     return {
       isSuccess: false,
@@ -380,7 +403,23 @@ const postModulesController = async (req, res) => {
   res.status(201).json(result);
 };
 
-//------------------------PUT MOdules controller--------------------------
+//------------------------PUT and DELETE Modules controller--------------------------
+const deleteModulesController = async (req, res) => {
+  // Validate request
+  const id = req.params.id;
+  // Access data
+  const sql = buildModulesDeleteSql();
+  console.log(sql);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await deleteModules(sql, id);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(204).json(result);
+};
 
 const putModulesController = async (req, res) => {
   // Validate request
@@ -448,6 +487,7 @@ app.get("/api/modulemembers/:id", (req, res) =>
 );
 
 // Modules
+//GET
 app.get("/api/modules", (req, res) => getModulesController(res, null, null));
 app.get("/api/modules/:id(\\d+)", (req, res) =>
   getModulesController(res, req.params.id, null)
@@ -458,14 +498,11 @@ app.get("/api/modules/leader/:id", (req, res) =>
 app.get("/api/modules/users/:id", (req, res) =>
   getModulesController(res, req.params.id, "users")
 );
-
-//Post Modules===================Post Modules==========================here======================================
+//POST
 app.post("/api/modules", postModulesController);
-// app.post("/api/modulemembers", postModulemembersController);
-
 //PUT or UPDATE
 app.put("/api/modules/:id", putModulesController);
-
+app.delete("/api/modules/:id", deleteModulesController);
 // Users
 app.get("/api/users", (req, res) => getUsersController(res, null, null));
 app.get("/api/users/:id(\\d+)", (req, res) =>
