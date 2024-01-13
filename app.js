@@ -269,6 +269,7 @@ const createModulemembers = async (sql, record) => {
 const deleteModules = async (sql, id) => {
   try {
     const status = await database.query(sql, { ModuleID: id });
+
     return status[0].affectedRows === 0
       ? {
           isSuccess: false,
@@ -303,11 +304,17 @@ const UpdateModules = async (sql, id, record) => {
 
     const { isSuccess, result, message } = await read(recoverRecordSql);
   } catch (error) {
-    return {
-      isSuccess: false,
-      result: null,
-      message: `Failed to execute query: ${error.message}`,
-    };
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record sucessfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to execute query: ${error.message}`,
+        };
   }
 };
 
@@ -409,16 +416,21 @@ const deleteModulesController = async (req, res) => {
   const id = req.params.id;
   // Access data
   const sql = buildModulesDeleteSql();
-  console.log(sql);
+  console.log("SQL for delete operation:", sql);
+
   const {
     isSuccess,
     result,
     message: accessorMessage,
   } = await deleteModules(sql, id);
-  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+  if (!isSuccess) {
+    console.error("Error delting module: ", accessorMessage);
+    return res.status(400).json({ message: accessorMessage });
+  }
 
   // Response to request
-  res.status(204).json(result);
+  console.log("Module deleted successfully");
+  res.status(200).json({ message: accessorMessage });
 };
 
 const putModulesController = async (req, res) => {
