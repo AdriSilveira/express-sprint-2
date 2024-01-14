@@ -268,7 +268,7 @@ const createModulemembers = async (sql, record) => {
 
 const deleteModules = async (sql, id) => {
   try {
-    const status = await database.query(sql, { ModuleID: id });
+    const status = await database.query(sql, { moduleID: id });
 
     return status[0].affectedRows === 0
       ? {
@@ -292,7 +292,7 @@ const deleteModules = async (sql, id) => {
 
 const UpdateModules = async (sql, id, record) => {
   try {
-    const status = await database.query(sql, { ...record, ModuleID: id });
+    const status = await database.query(sql, { ...record, moduleID: id });
 
     if (status[0].affectRows === 0)
       return {
@@ -300,21 +300,27 @@ const UpdateModules = async (sql, id, record) => {
         result: null,
         message: "Failed to update record: no rows affected",
       };
-    const recoverRecordSql = buildModulesSelectSql(id, null);
 
+    const recoverRecordSql = buildModulesSelectSql(id, null);
     const { isSuccess, result, message } = await read(recoverRecordSql);
-  } catch (error) {
+
     return isSuccess
       ? {
           isSuccess: true,
           result: result,
-          message: "Record sucessfully recovered",
+          message: "Record successfully recovered",
         }
       : {
           isSuccess: false,
           result: null,
-          message: `Failed to execute query: ${error.message}`,
+          message: `Failed to recover the inserted record: ${message}`,
         };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
   }
 };
 
@@ -514,7 +520,9 @@ app.get("/api/modules/users/:id", (req, res) =>
 app.post("/api/modules", postModulesController);
 //PUT or UPDATE
 app.put("/api/modules/:id", putModulesController);
+
 app.delete("/api/modules/:id", deleteModulesController);
+
 // Users
 app.get("/api/users", (req, res) => getUsersController(res, null, null));
 app.get("/api/users/:id(\\d+)", (req, res) =>
