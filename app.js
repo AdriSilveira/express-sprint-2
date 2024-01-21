@@ -44,7 +44,7 @@ const buildModulesUpdateSql = () => {
     "moduleCode",
     "moduleLevel",
     "moduleYearID",
-    "moduleLeaderID",
+    "moduleLeaderID", //userModuleID
     "moduleImageURL",
   ];
 
@@ -470,16 +470,36 @@ const getUsersController = async (res, id, variant) => {
   res.status(200).json(result);
 };
 
-const getModulesController = async (res, id, variant) => {
-  // Validate request
+const getModulesController = async (req, res) => {
+  try {
+    // Check if res is defined and has the 'status' property
+    if (!res || !res.status) {
+      console.error("Invalid 'res' object:", res);
+      return res.status(400).json({ message: "Internal Server Error" });
+    }
 
-  // Access data
-  const sql = buildModulesSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
-  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+    // Check if req.query is defined and has the 'page' property
+    const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
 
-  // Response to request
-  res.status(200).json(result);
+    const offset = (page - 1) * pageSize;
+
+    // Access data
+    const sql =
+      buildModulesSelectSql(null, null) + ` LIMIT ${offset}, ${pageSize}`;
+    const { isSuccess, result, message: accessorMessage } = await read(sql);
+
+    if (!isSuccess) {
+      console.error("Error in accessing data:", accessorMessage);
+      return res.status(404).json({ message: accessorMessage });
+    }
+
+    // Response to request
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in getModulesController:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 const getYearsController = async (res, id, variant) => {
