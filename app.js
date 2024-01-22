@@ -1,4 +1,10 @@
-// Imports --------------Connected with GIT-------------------------
+// Imports --------------Connected with GIT-------------------------ADRIII
+// process.on("uncaughtException", (err) => {
+//   console.error("Uncaught Exception:", err.message);
+//   console.error(err.stack);
+//   process.exit(1);
+// });
+
 import express from "express";
 import cors from "cors";
 import database from "./database.js";
@@ -10,7 +16,7 @@ app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configure middleware --------------------------
+//Configure middleware --------------------------
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
 
@@ -294,12 +300,13 @@ const UpdateModules = async (sql, id, record) => {
   try {
     const status = await database.query(sql, { ...record, moduleID: id });
 
-    if (status[0].affectRows === 0)
+    if (status[0].affectedRows === 0) {
       return {
         isSuccess: false,
         result: null,
         message: "Failed to update record: no rows affected",
       };
+    }
 
     const recoverRecordSql = buildModulesSelectSql(id, null);
     const { isSuccess, result, message } = await read(recoverRecordSql);
@@ -323,7 +330,6 @@ const UpdateModules = async (sql, id, record) => {
     };
   }
 };
-
 const createModules = async (sql, record) => {
   try {
     const status = await database.query(sql, record);
@@ -471,14 +477,14 @@ const getUsersController = async (res, id, variant) => {
 };
 
 const getModulesController = async (req, res) => {
+  console.log("Bola");
+  console.log(res);
   try {
-    // Check if res is defined and has the 'status' property
     if (!res || !res.status) {
       console.error("Invalid 'res' object:", res);
       return res.status(400).json({ message: "Internal Server Error" });
     }
 
-    // Check if req.query is defined and has the 'page' property
     const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
 
@@ -526,7 +532,7 @@ app.get("/api/modulemembers/:id", (req, res) =>
 
 // Modules
 //GET
-app.get("/api/modules", (req, res) => getModulesController(res, null, null));
+app.get("/api/modules", (req, res) => getModulesController(req, res));
 app.get("/api/modules/:id(\\d+)", (req, res) =>
   getModulesController(res, req.params.id, null)
 );
