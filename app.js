@@ -491,7 +491,7 @@ const getModulesController = async (req, res) => {
     }
 
     const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+    const pageSize = parseInt(req.query.pageSize) || 15;
 
     const offset = (page - 1) * pageSize;
 
