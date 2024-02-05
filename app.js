@@ -219,12 +219,17 @@ const buildGroupsSelectSql = (id, variant) => {
     "assessmentID",
     "currentGrade",
   ];
+  let fields2 = [
+    `Groups.groupID, Groups.groupName, Groups.groupModuleName, Groups.assessmentID, Groups.currentGrade, Groups.moduleID`,
+  ];
   let sql = "";
 
   switch (variant) {
     default:
       sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE GroupID=${id}`;
+    case "fetchgroups":
+      sql = `SELECT ${fields2} FROM Groups INNER JOIN Modules ON Groups.moduleID=Modules.moduleID WHERE Groups.moduleID= ${id} `;
   }
   return sql;
 };
@@ -583,6 +588,9 @@ app.get("/api/users/groups/:id", (req, res) =>
 app.get("/api/groups", (req, res) => getGroupsController(res, null, null));
 app.get("/api/groups/:id", (req, res) =>
   getGroupsController(res, req.params.id, null)
+);
+app.get("/api/groups/modules/:id", (req, res) =>
+  getGroupsController(res, req.params.id, "fetchgroups")
 );
 
 // Years
