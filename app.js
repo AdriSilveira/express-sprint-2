@@ -138,8 +138,7 @@ const buildModulesSelectSql = (id, variant) => {
 };
 
 const buildUsersSelectSql = (id, variant) => {
-  let table =
-    "((Users LEFT JOIN UserType ON userTypeID=userTypeID) LEFT JOIN Years ON userYearID=yearID )";
+  let table = "Users";
   let fields = [
     "userID",
     "userFirstName",
@@ -150,7 +149,8 @@ const buildUsersSelectSql = (id, variant) => {
     "userTypeID",
     "userImageURL",
     // Specify the table alias for userTypeID
-    "CONCAT(userFirstName, ' ', userLastName) AS userName, UserType.userTypeID", //added last
+    //"CONCAT()",
+    //"CONCAT(userFirstName, ' ', userLastName) AS userName",
   ];
   let sql = "";
 
@@ -163,30 +163,26 @@ const buildUsersSelectSql = (id, variant) => {
   //const Admin = 5; DELETED
   switch (variant) {
     case "student":
-      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Student}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE Users.userTypeID=${Student}`;
       break;
     case "staff":
-      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Staff}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE Users.userTypeID=${Staff}`;
       break;
     case "lecturer":
-      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Lecturer}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE Users.userTypeID=${Lecturer}`;
       break;
     case "professor":
-      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Professor}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE Users.userTypeID=${Professor}`;
       break;
     case "mentor":
-      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Academic_Mentor}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE Users.userTypeID=${Academic_Mentor}`;
       break;
     case "leader":
-      sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Module_Leader}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE Users.userTypeID=${Module_Leader}`;
       break;
-
-    // case "admin":
-    //   sql = `SELECT ${fields} FROM ${table} WHERE userTypeID=${Admin}`;
-    //   break;
     case "groups":
-      table = `GroupMembers INNER JOIN ${table} ON GroupMembers.groupMemberID=Users.userID`;
-      sql = `SELECT ${fields} FROM ${table} WHERE groupID=${id}`;
+      let groupSql = `GroupMembers INNER JOIN ${table} ON GroupMembers.groupMemberID=Users.userID`;
+      sql = `SELECT ${fields} FROM ${groupSql} WHERE groupID=${id}`;
       break;
     default:
       sql = `SELECT ${fields} FROM ${table}`;
@@ -198,7 +194,7 @@ const buildUsersSelectSql = (id, variant) => {
 
 const buildYearsSelectSql = (id, variant) => {
   let table = "Years";
-  let fields = ["yearID", "yearName", "yearStart", "yearEnd"];
+  let fields = ["yearID", "yearName"];
   let sql = "";
 
   switch (variant) {
@@ -216,11 +212,12 @@ const buildGroupsSelectSql = (id, variant) => {
     "groupID",
     "groupName",
     "groupModuleName",
-    "assessmentID",
     "currentGrade",
+    "moduleID",
+    "assessmentID",
   ];
   let fields2 = [
-    `Groups.groupID, Groups.groupName, Groups.groupModuleName, Groups.assessmentID, Groups.currentGrade, Groups.moduleID`,
+    `Groups.groupID, Groups.groupName, Groups.groupModuleName, Groups.assessmentID, Groups.currentGrade, Groups.ModuleID`,
   ];
   let sql = "";
 
@@ -228,8 +225,10 @@ const buildGroupsSelectSql = (id, variant) => {
     default:
       sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE GroupID=${id}`;
+      break;
     case "fetchgroups":
       sql = `SELECT ${fields2} FROM Groups INNER JOIN Modules ON Groups.moduleID=Modules.moduleID WHERE Groups.moduleID= ${id} `;
+      break;
   }
   return sql;
 };
@@ -489,7 +488,7 @@ const getModulesController = async (req, res) => {
       console.error("Invalid 'res' object:", res);
       return res.status(400).json({ message: "Internal Server Error" });
     }
-
+    // with this code I aim controlling the number of data is being display in the internet.
     const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
     const pageSize = parseInt(req.query.pageSize) || 15;
 
