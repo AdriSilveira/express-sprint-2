@@ -41,7 +41,7 @@ const buildModulesDeleteSql = () => {
   return `DELETE FROM  ${table} 
       WHERE moduleID=:moduleID`;
 };
-
+//Building modules without the ID what will be added automacally by the database
 const buildModulesUpdateSql = () => {
   let table = "Modules";
   let mutableFields = [
@@ -77,6 +77,7 @@ const buildModulesInsertSql = () => {
     "moduleLevel",
     "moduleYearID",
     "moduleLeaderID",
+    //"moduleLeaderName",
     "moduleImageURL",
   ];
 
@@ -233,6 +234,95 @@ const buildGroupsSelectSql = (id, variant) => {
   return sql;
 };
 
+const buildGroupsUpdateSql = (id, variant) => {
+  let table = "Groups";
+  let fields = [
+    "groupName",
+    "groupModuleName",
+    "currentGrade",
+    "moduleID",
+    "assessmentID",
+  ];
+  let fields2 = [
+    `Groups.groupID, Groups.groupName, Groups.groupModuleName, Groups.assessmentID, Groups.currentGrade, Groups.ModuleID`,
+  ];
+  let sql = "";
+
+  switch (variant) {
+    default:
+      sql = `SELECT ${fields} FROM ${table}`;
+      if (id) sql += ` WHERE GroupID=${id}`;
+      break;
+    case "fetchgroups":
+      sql = `SELECT ${fields2} FROM Groups INNER JOIN Modules ON Groups.moduleID=Modules.moduleID WHERE Groups.moduleID= ${id} `;
+      break;
+  }
+  return sql;
+};
+// ==============NEW GROUPS CONTROLLERS ========================
+// POST Groups
+const postGroupsController = async (req, res) => {
+  // Validate request
+
+  // Access data
+  const sql = buildGroupsInsertSql();
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await createGroups(sql, req.body);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(201).json(result);
+};
+
+// PUT or UPDATE Groups
+const putGroupsController = async (req, res) => {
+  // Validate request
+  const id = req.params.id;
+  const record = req.body;
+
+  // Access data
+  const sql = buildGroupsUpdateSql(id);
+  console.log(sql);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await UpdateGroups(sql, id, record);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
+
+// DELETE Groups
+const deleteGroupsController = async (req, res) => {
+  // Validate request
+  const id = req.params.id;
+
+  // Access data
+  const sql = buildGroupsDeleteSql();
+  console.log("SQL for delete operation:", sql);
+
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await deleteGroups(sql, id);
+  if (!isSuccess) {
+    console.error("Error deleting group: ", accessorMessage);
+    return res.status(400).json({ message: accessorMessage });
+  }
+
+  // Response to request
+  console.log("Group deleted successfully");
+  res.status(200).json({ message: accessorMessage });
+};
+
+//===============END GROUPS CONTROLLERS========================
+
 const getGroupsController = async (res, id, variant) => {
   //Validate reques
 
@@ -275,6 +365,95 @@ const createModulemembers = async (sql, record) => {
     };
   }
 };
+//===========================GROUPS==============================
+
+const deleteGroups = async (sql, id) => {
+  try {
+    const status = await database.query(sql, { groupID: id });
+
+    return status[0].affectedRows === 0
+      ? {
+          isSuccess: false,
+          result: null,
+          message: `Failed to delete record: ${id}`,
+        }
+      : {
+          isSuccess: true,
+          result: null,
+          message: "Record successfully deleted",
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+
+const UpdateGroups = async (sql, id, record) => {
+  try {
+    const status = await database.query(sql, { ...record, groupID: id });
+
+    if (status[0].affectedRows === 0) {
+      return {
+        isSuccess: false,
+        result: null,
+        message: "Failed to update record: no rows affected",
+      };
+    }
+
+    const recoverRecordSql = buildGroupsSelectSql(id, null);
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record successfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover the inserted record: ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+const createGroups = async (sql, record) => {
+  try {
+    const status = await database.query(sql, record);
+
+    const recoverRecordSql = buildGroupsSelectSql(status[0].insertId, null);
+
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record successfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover the inserted record: ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+
+//==========================MODULES==============================
 
 const deleteModules = async (sql, id) => {
   try {
@@ -408,7 +587,7 @@ const getModulemembersController = async (res, id, variant) => {
   // Response to request
   res.status(200).json(result);
 };
-//=============GETMODULESCONTROLLER=============
+//=============GET MODULES CONTROLLER=============
 //POST MODULE CONTROLLER-----------------------------------------
 const postModulesController = async (req, res) => {
   // Validate request
@@ -480,9 +659,9 @@ const getUsersController = async (res, id, variant) => {
   res.status(200).json(result);
 };
 
-const getModulesController = async (req, res) => {
+const getModulesController = async (req, res, variant) => {
   console.log("Bola");
-  console.log(res);
+  console.log(res.status + "test");
   try {
     if (!res || !res.status) {
       console.error("Invalid 'res' object:", res);
@@ -496,7 +675,8 @@ const getModulesController = async (req, res) => {
 
     // Access data
     const sql =
-      buildModulesSelectSql(null, null) + ` LIMIT ${offset}, ${pageSize}`;
+      buildModulesSelectSql(req.params.id, variant) +
+      ` LIMIT ${offset}, ${pageSize}`;
     const { isSuccess, result, message: accessorMessage } = await read(sql);
 
     if (!isSuccess) {
@@ -524,7 +704,7 @@ const getYearsController = async (res, id, variant) => {
   res.status(200).json(result);
 };
 
-// Endpoints -------------------------------------
+// ----------------------------Endpoints -------------------------------------
 // Modulemembers
 app.get(
   "/api/modulemembers",
@@ -534,26 +714,26 @@ app.get("/api/modulemembers/:id", (req, res) =>
   getModulemembersController(res, req.params.id, null)
 );
 
-// Modules
-//GET
+// Modules GET
 app.get("/api/modules", (req, res) => getModulesController(req, res));
-app.get("/api/modules/:id(\\d+)", (req, res) =>
-  getModulesController(res, req.params.id, null)
-);
+
+app.get("/api/modules/:id", (req, res) => getModulesController(req, res, null));
+
 app.get("/api/modules/leader/:id", (req, res) =>
-  getModulesController(res, req.params.id, "leader")
+  getModulesController(req, res, "leader")
 );
+
 app.get("/api/modules/users/:id", (req, res) =>
   getModulesController(res, req.params.id, "users")
 );
-//POST
+//Modules POST
 app.post("/api/modules", postModulesController);
 //PUT or UPDATE
 app.put("/api/modules/:id", putModulesController);
 
 app.delete("/api/modules/:id", deleteModulesController);
 
-// Users
+// GET Users
 app.get("/api/users", (req, res) => getUsersController(res, null, null));
 app.get("/api/users/:id(\\d+)", (req, res) =>
   getUsersController(res, req.params.id, null)
@@ -570,9 +750,9 @@ app.get("/api/users/lecturer", (req, res) =>
 app.get("/api/users/professor", (req, res) =>
   getUsersController(res, null, "professor")
 );
-app.get("/api/users/admin", (req, res) =>
-  getUsersController(res, null, "admin")
-);
+// app.get("/api/users/admin", (req, res) =>
+//   getUsersController(res, null, "admin")
+// );
 app.get("/api/users/mentor", (req, res) =>
   getUsersController(res, null, "mentor")
 );
@@ -583,7 +763,7 @@ app.get("/api/users/groups/:id", (req, res) =>
   getUsersController(res, req.params.id, "groups")
 );
 
-//Groups
+// GET Groups
 app.get("/api/groups", (req, res) => getGroupsController(res, null, null));
 app.get("/api/groups/:id", (req, res) =>
   getGroupsController(res, req.params.id, null)
@@ -591,7 +771,14 @@ app.get("/api/groups/:id", (req, res) =>
 app.get("/api/groups/modules/:id", (req, res) =>
   getGroupsController(res, req.params.id, "fetchgroups")
 );
+//NEW TO CREATE CONTROLLERS ON IT.
+app.post("/api/groups", postGroupsController);
+//PUT or UPDATE
+app.put("/api/groups/:id", putGroupsController);
 
+app.delete("/api/groups/:id", deleteGroupsController);
+
+//GET Years
 // Years
 app.get("/api/years", (req, res) => getYearsController(res, null, null));
 app.get("/api/years/:id", (req, res) =>
