@@ -265,7 +265,7 @@ const postGroupsController = async (req, res) => {
   // Validate request
 
   // Access data
-  const sql = buildGroupsInsertSql();
+  const sql = buildGroupsSelectSql();
   const {
     isSuccess,
     result,
@@ -284,7 +284,7 @@ const putGroupsController = async (req, res) => {
   const record = req.body;
 
   // Access data
-  const sql = buildGroupsUpdateSql(id);
+  const sql = buildGroupsSelectSql(id);
   console.log(sql);
   const {
     isSuccess,
@@ -303,7 +303,7 @@ const deleteGroupsController = async (req, res) => {
   const id = req.params.id;
 
   // Access data
-  const sql = buildGroupsDeleteSql();
+  const sql = buildGroupsSelectSql();
   console.log("SQL for delete operation:", sql);
 
   const {
@@ -404,6 +404,7 @@ const UpdateGroups = async (sql, id, record) => {
     }
 
     const recoverRecordSql = buildGroupsSelectSql(id, null);
+
     const { isSuccess, result, message } = await read(recoverRecordSql);
 
     return isSuccess
@@ -587,8 +588,9 @@ const getModulemembersController = async (res, id, variant) => {
   // Response to request
   res.status(200).json(result);
 };
-//=============GET MODULES CONTROLLER=============
-//POST MODULE CONTROLLER-----------------------------------------
+//----------------------------------------------CONTROLLER------------------------------------------
+//POST MODULE CONTROLLER
+
 const postModulesController = async (req, res) => {
   // Validate request
 
