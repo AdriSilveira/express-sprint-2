@@ -153,6 +153,16 @@ const buildUsersSelectSql = (id, variant) => {
     //"CONCAT()",
     //"CONCAT(userFirstName, ' ', userLastName) AS userName",
   ];
+  let fields2 = [
+    "Users.userID",
+    "Users.userFirstName",
+    "Users.userLastName",
+    "Users.userEmail",
+    "Users.userLevel",
+    "Users.userYearID",
+    "Users.userTypeID",
+    "Users.userImageURL",
+  ];
   let sql = "";
 
   const Student = 1; // Primary key for student type in my database
@@ -181,10 +191,15 @@ const buildUsersSelectSql = (id, variant) => {
     case "leader":
       sql = `SELECT ${fields} FROM ${table} WHERE Users.userTypeID=${Module_Leader}`;
       break;
+
     case "groups":
-      let groupSql = `GroupMembers INNER JOIN ${table} ON GroupMembers.groupMemberID=Users.userID`;
-      sql = `SELECT ${fields} FROM ${groupSql} WHERE groupID=${id}`;
+      console.log("does this reatch");
+      sql = `SELECT ${fields2}
+                FROM Users 
+                INNER JOIN	GroupMember ON Users.userID = GroupMember.userID
+                WHERE GroupMember.groupID = ${id}`;
       break;
+
     default:
       sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE userID=${id}`;
@@ -651,7 +666,7 @@ const putModulesController = async (req, res) => {
 
 const getUsersController = async (res, id, variant) => {
   // Validate request
-
+  console.log("This is test" + id, variant);
   // Access data
   const sql = buildUsersSelectSql(id, variant);
   const { isSuccess, result, message: accessorMessage } = await read(sql);
