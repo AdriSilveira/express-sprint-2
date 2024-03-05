@@ -94,6 +94,7 @@ const buildModulesReadQuery = (id, variant) => {
 
   return { sql, data: { ID: id } };
 };
+console.log(data);
 
 const buildModulesInsertSql = () => {
   let table = "Modules";
@@ -117,9 +118,9 @@ const buildUserModuleReadQuery = (id, variant) => {
     "(UserModule LEFT JOIN Users ON UserModuleUserID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
   let fields = [
     "userModuleID",
-    "UserModule.moduleID AS userModuleModuleID",
+    "moduleID",
     'CONCAT(Modules.moduleCode," ",Modules.moduleName) AS moduleName',
-    "Users.userID as UserUserID",
+    "userID",
     'CONCAT(Users.userFirstName," ",Users.userLastName) AS userName',
   ];
   let sql = "";
@@ -485,7 +486,7 @@ const getModulesController = async (req, res, variant) => {
       console.error("Invalid 'res' object:", res);
       return res.status(400).json({ message: "Internal Server Error" });
     }
-    //with this code I aim controlling the number of data is being display in the interface.
+    //rwith this code I aim controlling the number of data is being display in the interface.
     const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
     const pageSize = parseInt(req.query.pageSize) || 15;
 
