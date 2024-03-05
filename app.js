@@ -191,7 +191,6 @@ const buildUsersSelectSql = (id, variant) => {
     case "leader":
       sql = `SELECT ${fields} FROM ${table} WHERE Users.userTypeID=${Module_Leader}`;
       break;
-
     case "groups":
       console.log("does this reatch");
       sql = `SELECT ${fields2}
@@ -199,12 +198,10 @@ const buildUsersSelectSql = (id, variant) => {
                 INNER JOIN	GroupMember ON Users.userID = GroupMember.userID
                 WHERE GroupMember.groupID = ${id}`;
       break;
-
     default:
       sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE userID=${id}`;
   }
-
   return sql;
 };
 
