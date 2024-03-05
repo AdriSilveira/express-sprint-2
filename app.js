@@ -28,7 +28,8 @@ app.use(function (req, res, next) {
   next();
 });
 
-// Controllers -----------------------------------
+//SQL
+//==========================================MODULES============================================
 const buildSetFields = (fields) =>
   fields.reduce(
     (setSQL, field, index) =>
@@ -62,50 +63,6 @@ const buildModulesUpdateSql = () => {
   );
 };
 
-const buildModulemembersInsertSql = () => {
-  let table = "UserModule";
-  let mutableFields = ["userModuleID", "userID", "moduleID"];
-  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
-};
-
-const buildModulesInsertSql = () => {
-  let table = "Modules";
-  let mutableFields = [
-    "moduleID",
-    "moduleName",
-    "moduleCode",
-    "moduleLevel",
-    "moduleYearID",
-    "moduleLeaderID",
-    //"moduleLeaderName",
-    "moduleImageURL",
-  ];
-
-  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
-};
-console.log("Here");
-//=========here to fix?============
-const buildModulemembersSelectSql = (id, variant) => {
-  let table =
-    "(UserModule LEFT JOIN Users ON UserModule.userID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
-  let fields = [
-    "userModuleID",
-    "moduleID",
-    'CONCAT(moduleCode," ",moduleName) AS moduleName',
-    "userID",
-    'CONCAT(userFirstName," ",userLastName) AS userName',
-  ];
-  let sql = "";
-  console.log("Here PPPPP");
-  switch (variant) {
-    default:
-      sql = `SELECT ${fields} FROM ${table}`;
-      if (id) sql += ` WHERE userModuleID=${id}`;
-      console.log("Here AAAAAA");
-  }
-  return sql;
-};
-
 const buildModulesSelectSql = (id, variant) => {
   let table =
     "((Modules LEFT JOIN Users ON moduleLeaderID=userID) LEFT JOIN Years ON moduleYearID=yearID)";
@@ -124,20 +81,64 @@ const buildModulesSelectSql = (id, variant) => {
 
   switch (variant) {
     case "leader":
-      sql = `SELECT ${fields} FROM ${table} WHERE moduleLeaderID=${id}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE moduleLeaderID=:ID`;
       break;
     case "users":
       table = `UserModule INNER JOIN ${table} ON UserModule.userModuleID=Modules.moduleID`;
-      sql = `SELECT ${fields} FROM ${table} WHERE userModuleID=${id}`;
+      sql = `SELECT ${fields} FROM ${table} WHERE userModuleID=:ID`;
       break;
     default:
       sql = `SELECT ${fields} FROM ${table}`;
-      if (id) sql += ` WHERE moduleID=${id}`;
+      if (id) sql += ` WHERE moduleID=:ID`;
   }
 
   return sql;
 };
 
+const buildModulesInsertSql = () => {
+  let table = "Modules";
+  let mutableFields = [
+    "moduleID",
+    "moduleName",
+    "moduleCode",
+    "moduleLevel",
+    "moduleYearID",
+    "moduleLeaderID",
+    //"moduleLeaderName",
+    "moduleImageURL",
+  ];
+
+  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+};
+
+//================================================MODULEMEMBERS=================================================
+const buildUserModuleSelectSql = (id, variant) => {
+  let table =
+    "(UserModule LEFT JOIN Users ON UserModuleUserID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
+  let fields = [
+    "userModuleID",
+    "UserModule.moduleID AS userModuleModuleID",
+    'CONCAT(Modules.moduleCode," ",Modules.moduleName) AS moduleName',
+    "Users.userID as UserUserID",
+    'CONCAT(Users.userFirstName," ",Users.userLastName) AS userName',
+  ];
+  let sql = "";
+
+  switch (variant) {
+    default:
+      sql = `SELECT ${fields.join(", ")} FROM ${table}`;
+      if (id) sql += ` WHERE UserModule.userModuleID=:ID`;
+  }
+  return sql;
+};
+
+const buildUserModuleInsertSql = () => {
+  let table = "UserModule";
+  let mutableFields = ["userModuleID", "userID", "moduleID"];
+  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+};
+
+//================================================USERS=================================================
 const buildUsersSelectSql = (id, variant) => {
   let table = "Users";
   let fields = [
@@ -196,15 +197,55 @@ const buildUsersSelectSql = (id, variant) => {
       sql = `SELECT ${fields2}
                 FROM Users 
                 INNER JOIN	GroupMember ON Users.userID = GroupMember.userID
-                WHERE GroupMember.groupID = ${id}`;
+                WHERE GroupMember.groupID =:ID`;
       break;
     default:
       sql = `SELECT ${fields} FROM ${table}`;
-      if (id) sql += ` WHERE userID=${id}`;
+      if (id) sql += ` WHERE userID=:ID`;
   }
   return sql;
 };
 
+const buildUsersDeleteSql = () => {
+  let table = "Users";
+  return `DELETE FROM  ${table} 
+      WHERE userID=:userID`;
+};
+const buildUsersUpdateSql = (id, variant) => {
+  let table = "Users";
+  let mutableFields = [
+    "userID",
+    "userFirstName",
+    "userLastName",
+    "userEmail",
+    "userLevel",
+    "userYearID",
+    "userTypeID",
+    "userImageURL",
+  ];
+
+  return (
+    // "UPDATE Users "
+    `UPDATE ${table} ` + buildSetFields(mutableFields) + ` WHERE userID=:userID`
+  );
+};
+const buildUsersInsertSql = () => {
+  let table = "Users";
+  let mutableFields = [
+    "userID",
+    "userFirstName",
+    "userLastName",
+    "userEmail",
+    "userLevel",
+    "userYearID",
+    "userTypeID",
+    "userImageURL",
+  ];
+
+  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+};
+
+//================================================YEARS=================================================
 const buildYearsSelectSql = (id, variant) => {
   let table = "Years";
   let fields = ["yearID", "yearName"];
@@ -213,12 +254,12 @@ const buildYearsSelectSql = (id, variant) => {
   switch (variant) {
     default:
       sql = `SELECT ${fields} FROM ${table}`;
-      if (id) sql += ` WHERE moduleID=${id}`;
+      if (id) sql += ` WHERE moduleID=:ID`;
   }
 
   return sql;
 };
-//Build Groups ----------HERE-------------HERE-----------------
+//================================================GROUPS=================================================
 const buildGroupsSelectSql = (id, variant) => {
   let table = "Groups";
   let fields = [
@@ -237,10 +278,10 @@ const buildGroupsSelectSql = (id, variant) => {
   switch (variant) {
     default:
       sql = `SELECT ${fields} FROM ${table}`;
-      if (id) sql += ` WHERE GroupID=${id}`;
+      if (id) sql += ` WHERE GroupID=:ID`;
       break;
     case "fetchgroups":
-      sql = `SELECT ${fields2} FROM Groups INNER JOIN Modules ON Groups.moduleID=Modules.moduleID WHERE Groups.moduleID= ${id} `;
+      sql = `SELECT ${fields2} FROM Groups INNER JOIN Modules ON Groups.moduleID=Modules.moduleID WHERE Groups.moduleID=:ID `;
       break;
   }
   return sql;
@@ -271,9 +312,47 @@ const buildGroupsUpdateSql = (id, variant) => {
   }
   return sql;
 };
-// ==============NEW GROUPS CONTROLLERS ========================
-// POST Groups
+const buildGroupsDeleteSql = () => {
+  let table = "Groups";
+  return `DELETE FROM  ${table} 
+      WHERE groupID=:groupID`;
+};
+const buildGroupsInsertSql = () => {
+  let table = "Groups";
+  let mutableFields = [
+    "groupID",
+    "groupName",
+    "groupModuleName",
+    "currentGrade",
+    "moduleID",
+    "assessmentID",
+  ];
+
+  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+};
+
+// =========================================POST CONTROLLERS =====================================
+//POST MODULES
+const postModulesController = async (req, res) => {
+  const record = req.body;
+  // Validate request
+
+  // Access data
+  const sql = buildModulesInsertSql();
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await createModules(sql, record);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(201).json(result);
+};
+
+//POST Groups
 const postGroupsController = async (req, res) => {
+  const record = req.body;
   // Validate request
 
   // Access data
@@ -282,34 +361,74 @@ const postGroupsController = async (req, res) => {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await createGroups(sql, req.body);
+  } = await createGroups(sql, record);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
   res.status(201).json(result);
 };
 
-// PUT or UPDATE Groups
-const putGroupsController = async (req, res) => {
-  // Validate request
-  const id = req.params.id;
+//POST USERS
+const postUsersController = async (req, res) => {
   const record = req.body;
+  // Validate request
 
   // Access data
-  const sql = buildGroupsSelectSql(id);
-  console.log(sql);
+  const sql = buildUsersInsertSql();
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await UpdateGroups(sql, id, record);
+  } = await createUsers(sql, record);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
-  res.status(200).json(result);
+  res.status(201).json(result);
 };
 
-// DELETE Groups
+//POST MODULES MEMBERS
+const postUserModuleController = async (req, res) => {
+  const record = req.body;
+  // Validate request
+
+  // Access data
+  const sql = buildUserModuleInsertSql();
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await createUserModule(sql, record);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(201).json(result);
+};
+
+//=================================DELETE CONTROLLERS===============================================
+// DELETE MODULES
+const deleteModulesController = async (req, res) => {
+  // Validate request
+  const id = req.params.id;
+  // Access data
+  const sql = buildModulesDeleteSql();
+  console.log("SQL for delete operation:", sql);
+
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await deleteModules(sql, id);
+  if (!isSuccess) {
+    console.error("Error delting module: ", accessorMessage);
+    return res.status(400).json({ message: accessorMessage });
+  }
+
+  // Response to request
+  console.log("Module deleted successfully");
+  res.status(200).json({ message: accessorMessage });
+};
+
+//DELETE GROUPS
 const deleteGroupsController = async (req, res) => {
   // Validate request
   const id = req.params.id;
@@ -333,13 +452,112 @@ const deleteGroupsController = async (req, res) => {
   res.status(200).json({ message: accessorMessage });
 };
 
-//===============END GROUPS CONTROLLERS========================
+//DELETE USERS
+const deleteUsersController = async (req, res) => {
+  // Validate request
+  const id = req.params.id;
 
-const getGroupsController = async (res, id, variant) => {
+  // Access data
+  const sql = buildUsersSelectSql();
+  console.log("SQL for delete operation:", sql);
+
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await deleteUsers(sql, id);
+  if (!isSuccess) {
+    console.error("Error deleting user: ", accessorMessage);
+    return res.status(400).json({ message: accessorMessage });
+  }
+
+  // Response to request
+  console.log("User deleted successfully");
+  res.status(200).json({ message: accessorMessage });
+};
+
+//===========================================GET CONTROLLERS================================================
+//GET MODULES
+const getModulesController = async (req, res, variant) => {
+  const id = req.params.id;
+  try {
+    if (!res || !res.status) {
+      console.error("Invalid 'res' object:", res);
+      return res.status(400).json({ message: "Internal Server Error" });
+    }
+    // with this code I aim controlling the number of data is being display in the interface.
+    const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
+    const pageSize = parseInt(req.query.pageSize) || 15;
+
+    const offset = (page - 1) * pageSize;
+
+    // Access data
+    const sql =
+      buildModulesSelectSql(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
+    const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+
+    if (!isSuccess) {
+      console.error("Error in accessing data:", accessorMessage);
+      return res.status(404).json({ message: accessorMessage });
+    }
+
+    // Response to request
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in getModulesController:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+//GET GROUPS
+const getGroupsController = async (req, res, variant) => {
+  const id = req.params.id;
   //Validate reques
 
   // Access data
   const sql = buildGroupsSelectSql(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
+
+//GET USERS
+const getUsersController = async (req, res, variant) => {
+  const id = req.params.id;
+
+  // Validate request
+  console.log("This is test" + id, variant);
+  // Access data
+  const sql = buildUsersSelectSql(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
+
+//GET MODULEMEMBER
+const getUserModuleController = async (req, res, variant) => {
+  const id = req.params.id;
+  // Validate request
+
+  // Access data
+  const sql = buildUserModuleSelectSql(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
+
+const getYearsController = async (req, res, variant) => {
+  const id = req.params.id;
+  // Validate request
+
+  // Access data
+  const sql = buildYearsSelectSql(id, variant);
   const { isSuccess, result, message: accessorMessage } = await read(sql);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
@@ -347,126 +565,64 @@ const getGroupsController = async (res, id, variant) => {
   res.status(200).json(result);
 };
 
-const createModulemembers = async (sql, record) => {
-  try {
-    const status = await database.query(sql, record);
+//======================================PUT CONTROLLERS========================================================
+//PUT MODULES
+const putModulesController = async (req, res) => {
+  const id = req.params.id;
+  const record = req.body;
+  // Validate request
+  // Access data
+  const sql = buildModulesUpdateSql();
+  console.log(sql);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await UpdateModules(sql, id, record);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
-    const recoverRecordSql = buildModulemembersSelectSql(
-      status[0].insertId,
-      null
-    );
-
-    const { isSuccess, result, message } = await read(recoverRecordSql);
-
-    return isSuccess
-      ? {
-          isSuccess: true,
-          result: result,
-          message: "Record successfully recovered",
-        }
-      : {
-          isSuccess: false,
-          result: null,
-          message: `Failed to recover the inserted record: ${message}`,
-        };
-  } catch (error) {
-    return {
-      isSuccess: false,
-      result: null,
-      message: `Failed to execute query: ${error.message}`,
-    };
-  }
-};
-//===========================GROUPS==============================
-
-const deleteGroups = async (sql, id) => {
-  try {
-    const status = await database.query(sql, { groupID: id });
-
-    return status[0].affectedRows === 0
-      ? {
-          isSuccess: false,
-          result: null,
-          message: `Failed to delete record: ${id}`,
-        }
-      : {
-          isSuccess: true,
-          result: null,
-          message: "Record successfully deleted",
-        };
-  } catch (error) {
-    return {
-      isSuccess: false,
-      result: null,
-      message: `Failed to execute query: ${error.message}`,
-    };
-  }
+  // Response to request
+  res.status(200).json(result);
 };
 
-const UpdateGroups = async (sql, id, record) => {
-  try {
-    const status = await database.query(sql, { ...record, groupID: id });
+//PUT GROUPS
+const putGroupsController = async (req, res) => {
+  const id = req.params.id;
+  const record = req.body;
+  // Validate request
+  // Access data
+  const sql = buildGroupsUpdateSql();
+  console.log(sql);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await UpdateGroups(sql, id, record);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
-    if (status[0].affectedRows === 0) {
-      return {
-        isSuccess: false,
-        result: null,
-        message: "Failed to update record: no rows affected",
-      };
-    }
-
-    const recoverRecordSql = buildGroupsSelectSql(id, null);
-
-    const { isSuccess, result, message } = await read(recoverRecordSql);
-
-    return isSuccess
-      ? {
-          isSuccess: true,
-          result: result,
-          message: "Record successfully recovered",
-        }
-      : {
-          isSuccess: false,
-          result: null,
-          message: `Failed to recover the inserted record: ${message}`,
-        };
-  } catch (error) {
-    return {
-      isSuccess: false,
-      result: null,
-      message: `Failed to execute query: ${error.message}`,
-    };
-  }
-};
-const createGroups = async (sql, record) => {
-  try {
-    const status = await database.query(sql, record);
-
-    const recoverRecordSql = buildGroupsSelectSql(status[0].insertId, null);
-
-    const { isSuccess, result, message } = await read(recoverRecordSql);
-
-    return isSuccess
-      ? {
-          isSuccess: true,
-          result: result,
-          message: "Record successfully recovered",
-        }
-      : {
-          isSuccess: false,
-          result: null,
-          message: `Failed to recover the inserted record: ${message}`,
-        };
-  } catch (error) {
-    return {
-      isSuccess: false,
-      result: null,
-      message: `Failed to execute query: ${error.message}`,
-    };
-  }
+  // Response to request
+  res.status(200).json(result);
 };
 
-//==========================MODULES==============================
+//PUT USERS
+const putUsersController = async (req, res) => {
+  const id = req.params.id;
+  const record = req.body;
+  // Validate request
+  // Access data
+  const sql = buildUsersUpdateSql();
+  console.log(sql);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await UpdateUsers(sql, id, record);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
+//=========================================================MODULES==========================================================
 
 const deleteModules = async (sql, id) => {
   try {
@@ -554,9 +710,9 @@ const createModules = async (sql, record) => {
   }
 };
 
-const read = async (sql) => {
+const read = async (sql, id) => {
   try {
-    const [result] = await database.query(sql);
+    const [result] = await database.query(sql, { ID: id });
     return result.length === 0
       ? { isSuccess: false, result: null, message: "No record(s) found" }
       : {
@@ -573,184 +729,230 @@ const read = async (sql) => {
   }
 };
 
-const postModulemembersController = async (req, res) => {
-  // Validate request
+//=============================================GROUPSMEMBERS===================================================================
 
-  // Access data
-  const sql = buildModulemembersInsertSql();
-  const {
-    isSuccess,
-    result,
-    message: accessorMessage,
-  } = await createModulemembers(sql, req.body);
-  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
-
-  // Response to request
-  res.status(201).json(result);
-};
-
-const getModulemembersController = async (res, id, variant) => {
-  // Validate request
-
-  // Access data
-  const sql = buildModulemembersSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
-  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
-
-  // Response to request
-  res.status(200).json(result);
-};
-//----------------------------------------------CONTROLLER------------------------------------------
-//POST MODULE CONTROLLER
-
-const postModulesController = async (req, res) => {
-  // Validate request
-
-  // Access data
-  const sql = buildModulesInsertSql();
-  const {
-    isSuccess,
-    result,
-    message: accessorMessage,
-  } = await createModules(sql, req.body);
-  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
-
-  // Response to request
-  res.status(201).json(result);
-};
-
-//------------------------PUT and DELETE Modules controller--------------------------
-const deleteModulesController = async (req, res) => {
-  // Validate request
-  const id = req.params.id;
-  // Access data
-  const sql = buildModulesDeleteSql();
-  console.log("SQL for delete operation:", sql);
-
-  const {
-    isSuccess,
-    result,
-    message: accessorMessage,
-  } = await deleteModules(sql, id);
-  if (!isSuccess) {
-    console.error("Error delting module: ", accessorMessage);
-    return res.status(400).json({ message: accessorMessage });
-  }
-
-  // Response to request
-  console.log("Module deleted successfully");
-  res.status(200).json({ message: accessorMessage });
-};
-
-const putModulesController = async (req, res) => {
-  // Validate request
-  const id = req.params.id;
-  const record = req.body;
-
-  // Access data
-  const sql = buildModulesUpdateSql();
-  console.log(sql);
-  const {
-    isSuccess,
-    result,
-    message: accessorMessage,
-  } = await UpdateModules(sql, id, record);
-  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
-
-  // Response to request
-  res.status(200).json(result);
-};
-
-const getUsersController = async (res, id, variant) => {
-  // Validate request
-  console.log("This is test" + id, variant);
-  // Access data
-  const sql = buildUsersSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
-  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
-
-  // Response to request
-  res.status(200).json(result);
-};
-
-const getModulesController = async (req, res, variant) => {
-  console.log("Bola");
-  console.log(res.status + "test");
+const createUserModule = async (sql, record) => {
   try {
-    if (!res || !res.status) {
-      console.error("Invalid 'res' object:", res);
-      return res.status(400).json({ message: "Internal Server Error" });
-    }
-    // with this code I aim controlling the number of data is being display in the internet.
-    const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
-    const pageSize = parseInt(req.query.pageSize) || 15;
+    const status = await database.query(sql, record);
 
-    const offset = (page - 1) * pageSize;
+    const recoverRecordSql = buildUserModuleSelectSql(status[0].insertId, null);
 
-    // Access data
-    const sql =
-      buildModulesSelectSql(req.params.id, variant) +
-      ` LIMIT ${offset}, ${pageSize}`;
-    const { isSuccess, result, message: accessorMessage } = await read(sql);
+    const { isSuccess, result, message } = await read(recoverRecordSql);
 
-    if (!isSuccess) {
-      console.error("Error in accessing data:", accessorMessage);
-      return res.status(404).json({ message: accessorMessage });
-    }
-
-    // Response to request
-    res.status(200).json(result);
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record successfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover the inserted record: ${message}`,
+        };
   } catch (error) {
-    console.error("Error in getModulesController:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+//=============================================GROUPS===================================================================
+const deleteGroups = async (sql, id) => {
+  try {
+    const status = await database.query(sql, { groupID: id });
+
+    return status[0].affectedRows === 0
+      ? {
+          isSuccess: false,
+          result: null,
+          message: `Failed to delete record: ${id}`,
+        }
+      : {
+          isSuccess: true,
+          result: null,
+          message: "Record successfully deleted",
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
   }
 };
 
-const getYearsController = async (res, id, variant) => {
-  // Validate request
+const UpdateGroups = async (sql, id, record) => {
+  try {
+    const status = await database.query(sql, { ...record, groupID: id });
 
-  // Access data
-  const sql = buildYearsSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
-  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+    if (status[0].affectedRows === 0) {
+      return {
+        isSuccess: false,
+        result: null,
+        message: "Failed to update record: no rows affected",
+      };
+    }
 
-  // Response to request
-  res.status(200).json(result);
+    const recoverRecordSql = buildGroupsSelectSql(id, null);
+
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record successfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover the inserted record: ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+const createGroups = async (sql, record) => {
+  try {
+    const status = await database.query(sql, record);
+
+    const recoverRecordSql = buildGroupsSelectSql(status[0].insertId, null);
+
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record successfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover the inserted record: ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+
+//====================================USERS==============================================================================
+
+const UpdateUsers = async (sql, id, record) => {
+  try {
+    const status = await database.query(sql, { ...record, userID: id });
+
+    if (status[0].affectedRows === 0) {
+      return {
+        isSuccess: false,
+        result: null,
+        message: "Failed to update record: no rows affected",
+      };
+    }
+
+    const recoverRecordSql = buildUsersSelectSql(id, null);
+
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record successfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover the inserted record: ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+const createUsers = async (sql, record) => {
+  try {
+    const status = await database.query(sql, record);
+
+    const recoverRecordSql = buildUsersSelectSql(status[0].insertId, null);
+
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? {
+          isSuccess: true,
+          result: result,
+          message: "Record successfully recovered",
+        }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover the inserted record: ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+const deleteUsers = async (sql, id) => {
+  try {
+    const status = await database.query(sql, { userID: id });
+
+    return status[0].affectedRows === 0
+      ? {
+          isSuccess: false,
+          result: null,
+          message: `Failed to delete record: ${id}`,
+        }
+      : {
+          isSuccess: true,
+          result: null,
+          message: "Record successfully deleted",
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
 };
 
 // ----------------------------Endpoints -------------------------------------
-// Modulemembers
-app.get(
-  "/api/modulemembers",
-  (req, res) => getModulemembersController(res, null, null) //nedd to change this two I think
-);
-app.get("/api/modulemembers/:id", (req, res) =>
-  getModulemembersController(res, req.params.id, null)
-);
 
-// Modules GET
+//MODULES
 app.get("/api/modules", (req, res) => getModulesController(req, res));
-
 app.get("/api/modules/:id", (req, res) => getModulesController(req, res, null));
-
 app.get("/api/modules/leader/:id", (req, res) =>
   getModulesController(req, res, "leader")
 );
-
 app.get("/api/modules/users/:id", (req, res) =>
-  getModulesController(res, req.params.id, "users")
+  getModulesController(req, res, "users")
 );
-//Modules POST
 app.post("/api/modules", postModulesController);
-//PUT or UPDATE
 app.put("/api/modules/:id", putModulesController);
-
 app.delete("/api/modules/:id", deleteModulesController);
 
-// GET Users
-app.get("/api/users", (req, res) => getUsersController(res, null, null));
+//USERS
+app.get("/api/users", (req, res) => getUsersController(req, res, null));
 app.get("/api/users/:id(\\d+)", (req, res) =>
-  getUsersController(res, req.params.id, null)
+  getUsersController(req, res, null)
 );
 app.get("/api/users/student", (req, res) =>
   getUsersController(res, null, "student")
@@ -774,30 +976,41 @@ app.get("/api/users/leader", (req, res) =>
   getUsersController(res, null, "leader")
 );
 app.get("/api/users/groups/:id", (req, res) =>
-  getUsersController(res, req.params.id, "groups")
+  getUsersController(req, res, "groups")
 );
+app.post("/api/users", postUsersController);
+app.put("/api/users/:id", putUsersController);
+app.delete("/api/users/:id", deleteUsersController);
 
-// GET Groups
-app.get("/api/groups", (req, res) => getGroupsController(res, null, null));
-app.get("/api/groups/:id", (req, res) =>
-  getGroupsController(res, req.params.id, null)
-);
+//GROUPS
+app.get("/api/groups", (req, res) => getGroupsController(req, res, null));
+app.get("/api/groups/:id", (req, res) => getGroupsController(req, res, null));
 app.get("/api/groups/modules/:id", (req, res) =>
-  getGroupsController(res, req.params.id, "fetchgroups")
+  getGroupsController(req, res, "fetchgroups")
 );
-//NEW TO CREATE CONTROLLERS ON IT.
 app.post("/api/groups", postGroupsController);
-//PUT or UPDATE
 app.put("/api/groups/:id", putGroupsController);
-
 app.delete("/api/groups/:id", deleteGroupsController);
 
-//GET Years
-// Years
-app.get("/api/years", (req, res) => getYearsController(res, null, null));
-app.get("/api/years/:id", (req, res) =>
-  getYearsController(res, req.params.id, null)
+//YEARS
+app.get("/api/years", (req, res) => getYearsController(req, res, null));
+app.get("/api/years/:id", (req, res) => getYearsController(req, res, null));
+
+// UserModule
+//I have changed modulemembers to usermodule, to maintain name consistence====
+app.get(
+  "/api/usermodule",
+  (req, res) => getUserModuleController(req, res, null) //nedd to change this two I think
 );
+app.get("/api/usermodule/:id", (req, res) =>
+  getUserModuleController(req, res, null)
+);
+app.post("/api/usermodule", postUserModuleController);
+//app.put("/api/usermodule/:id", putUserModuleController);
+//app.delete("/api/usermodule/:id", deleteUserModuleController);
+//Homework
+//Contribution
+//Assessments
 
 // Start server ----------------------------------
 const PORT = process.env.PORT || 5000;
