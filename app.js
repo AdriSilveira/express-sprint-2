@@ -28,7 +28,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-//SQL
+//SQL Prepared Statement
 //==========================================MODULES============================================
 const buildSetFields = (fields) =>
   fields.reduce(
@@ -63,7 +63,7 @@ const buildModulesUpdateSql = () => {
   );
 };
 
-const buildModulesSelectSql = (id, variant) => {
+const buildModulesReadQuery = (id, variant) => {
   let table =
     "((Modules LEFT JOIN Users ON moduleLeaderID=userID) LEFT JOIN Years ON moduleYearID=yearID)";
   let fields = [
@@ -85,14 +85,14 @@ const buildModulesSelectSql = (id, variant) => {
       break;
     case "users":
       table = `UserModule INNER JOIN ${table} ON UserModule.userModuleID=Modules.moduleID`;
-      sql = `SELECT ${fields} FROM ${table} WHERE userModuleID=:ID`;
+      sql = `SELECT ${fields} FROM ${table} WHERE userModuleID=:I\D`;
       break;
     default:
       sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE moduleID=:ID`;
   }
 
-  return sql;
+  return { sql, data: { ID: id } };
 };
 
 const buildModulesInsertSql = () => {
@@ -111,8 +111,8 @@ const buildModulesInsertSql = () => {
   return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
 };
 
-//================================================MODULEMEMBERS=================================================
-const buildUserModuleSelectSql = (id, variant) => {
+//================================================USERSMODULE=================================================
+const buildUserModuleReadQuery = (id, variant) => {
   let table =
     "(UserModule LEFT JOIN Users ON UserModuleUserID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
   let fields = [
@@ -129,7 +129,7 @@ const buildUserModuleSelectSql = (id, variant) => {
       sql = `SELECT ${fields.join(", ")} FROM ${table}`;
       if (id) sql += ` WHERE UserModule.userModuleID=:ID`;
   }
-  return sql;
+  return { sql, data: { ID: id } };
 };
 
 const buildUserModuleInsertSql = () => {
@@ -139,7 +139,7 @@ const buildUserModuleInsertSql = () => {
 };
 
 //================================================USERS=================================================
-const buildUsersSelectSql = (id, variant) => {
+const buildUsersReadQuery = (id, variant) => {
   let table = "Users";
   let fields = [
     "userID",
@@ -203,7 +203,7 @@ const buildUsersSelectSql = (id, variant) => {
       sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE userID=:ID`;
   }
-  return sql;
+  return { sql, data: { ID: id } };
 };
 
 const buildUsersDeleteSql = () => {
@@ -246,7 +246,7 @@ const buildUsersInsertSql = () => {
 };
 
 //================================================YEARS=================================================
-const buildYearsSelectSql = (id, variant) => {
+const buildYearsReadQuery = (id, variant) => {
   let table = "Years";
   let fields = ["yearID", "yearName"];
   let sql = "";
@@ -257,10 +257,10 @@ const buildYearsSelectSql = (id, variant) => {
       if (id) sql += ` WHERE moduleID=:ID`;
   }
 
-  return sql;
+  return { sql, data: { ID: id } };
 };
 //================================================GROUPS=================================================
-const buildGroupsSelectSql = (id, variant) => {
+const buildGroupsReadQuery = (id, variant) => {
   let table = "Groups";
   let fields = [
     "groupID",
@@ -284,7 +284,7 @@ const buildGroupsSelectSql = (id, variant) => {
       sql = `SELECT ${fields2} FROM Groups INNER JOIN Modules ON Groups.moduleID=Modules.moduleID WHERE Groups.moduleID=:ID `;
       break;
   }
-  return sql;
+  return { sql: sql, data: { ID: id } };
 };
 
 const buildGroupsUpdateSql = (id, variant) => {
@@ -485,16 +485,16 @@ const getModulesController = async (req, res, variant) => {
       console.error("Invalid 'res' object:", res);
       return res.status(400).json({ message: "Internal Server Error" });
     }
-    // with this code I aim controlling the number of data is being display in the interface.
+    //with this code I aim controlling the number of data is being display in the interface.
     const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
     const pageSize = parseInt(req.query.pageSize) || 15;
 
     const offset = (page - 1) * pageSize;
 
     // Access data
-    const sql =
-      buildModulesSelectSql(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
-    const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+    const query =
+      buildModulesReadQuery(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
+    const { isSuccess, result, message: accessorMessage } = await read(query);
 
     if (!isSuccess) {
       console.error("Error in accessing data:", accessorMessage);
@@ -515,8 +515,8 @@ const getGroupsController = async (req, res, variant) => {
   //Validate reques
 
   // Access data
-  const sql = buildGroupsSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  const query = buildGroupsReadQuery(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
@@ -530,8 +530,8 @@ const getUsersController = async (req, res, variant) => {
   // Validate request
   console.log("This is test" + id, variant);
   // Access data
-  const sql = buildUsersSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  const query = buildUsersReadQuery(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
@@ -544,21 +544,21 @@ const getUserModuleController = async (req, res, variant) => {
   // Validate request
 
   // Access data
-  const sql = buildUserModuleSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  const query = buildUserModuleReadQuery(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
   res.status(200).json(result);
 };
-
+//YEARS
 const getYearsController = async (req, res, variant) => {
   const id = req.params.id;
   // Validate request
 
   // Access data
-  const sql = buildYearsSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
+  const query = buildYearsReadQuery(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
@@ -710,9 +710,9 @@ const createModules = async (sql, record) => {
   }
 };
 
-const read = async (sql, id) => {
+const read = async (query) => {
   try {
-    const [result] = await database.query(sql, { ID: id });
+    const [result] = await database.query(query.sql, query.data);
     return result.length === 0
       ? { isSuccess: false, result: null, message: "No record(s) found" }
       : {
