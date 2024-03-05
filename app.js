@@ -111,7 +111,7 @@ const buildModulesInsertSql = () => {
   return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
 };
 
-//================================================MODULEMEMBERS=================================================
+//================================================USERMODULE=================================================
 const buildUserModuleSelectSql = (id, variant) => {
   let table =
     "(UserModule LEFT JOIN Users ON UserModuleUserID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
@@ -558,7 +558,7 @@ const getYearsController = async (req, res, variant) => {
 
   // Access data
   const sql = buildYearsSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
+  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
