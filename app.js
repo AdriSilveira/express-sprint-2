@@ -1,6 +1,7 @@
 import express, { query } from "express";
 import cors from "cors";
 import database from "./database.js";
+import { Query } from "mysql2/typings/mysql/lib/protocol/sequences/Query.js";
 //====================CHANGES HERE UPDATED THE PUT/UPDATE STATUS ==================
 // Configure express app -------------------------
 const app = new express();
@@ -30,10 +31,11 @@ const buildSetFields = (fields) =>
     "SET "
   );
 
-const buildModulesDeleteSql = () => {
+const buildModulesDeleteQuery = () => {
   let table = "Modules";
-  return `DELETE FROM  ${table} 
+  const sql = `DELETE FROM  ${table} 
       WHERE moduleID=:moduleID`;
+  return { sql, data: { moduleID: id } };
 };
 //Building modules without the ID what will be added automacally by the database
 const buildModulesUpdateQuery = (record, id) => {
@@ -207,7 +209,7 @@ const buildUsersDeleteSql = () => {
   return `DELETE FROM  ${table} 
       WHERE userID=:userID`;
 };
-const buildUsersUpdateSql = (id, variant) => {
+const buildUsersUpdateQuery = (record, id) => {
   let table = "Users";
   let mutableFields = [
     "userID",
@@ -220,10 +222,12 @@ const buildUsersUpdateSql = (id, variant) => {
     "userImageURL",
   ];
 
-  return (
+  const sql =
     // "UPDATE Users "
-    `UPDATE ${table} ` + buildSetFields(mutableFields) + ` WHERE userID=:userID`
-  );
+    `UPDATE ${table} ` +
+    buildSetFields(mutableFields) +
+    ` WHERE userID=:userID`;
+  return { sql, data: { ...record, userID: id } };
 };
 const buildUsersCreateQuery = (record) => {
   let table = "Users";
@@ -284,7 +288,7 @@ const buildGroupsReadQuery = (id, variant) => {
   return { sql, data: { ID: id } };
 };
 
-const buildGroupsUpdateSql = (id, variant) => {
+const buildGroupsUpdateQuery = (record, id) => {
   let table = "Groups";
   let fields = [
     "groupName",
@@ -307,7 +311,7 @@ const buildGroupsUpdateSql = (id, variant) => {
       sql = `SELECT ${fields2} FROM Groups INNER JOIN Modules ON Groups.moduleID=Modules.moduleID WHERE Groups.moduleID= ${id} `;
       break;
   }
-  return sql;
+  return { sql, data: { ...record, userID: id } };
 };
 const buildGroupsDeleteSql = () => {
   let table = "Groups";
@@ -407,14 +411,14 @@ const deleteModulesController = async (req, res) => {
   // Validate request
   const id = req.params.id;
   // Access data
-  const sql = buildModulesDeleteSql();
+  const query = buildModulesDeleteQuery(id);
   console.log("SQL for delete operation:", sql);
 
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await deleteModules(sql, id);
+  } = await deleteModules(query);
   if (!isSuccess) {
     console.error("Error delting module: ", accessorMessage);
     return res.status(400).json({ message: accessorMessage });
@@ -588,13 +592,13 @@ const putGroupsController = async (req, res) => {
   const record = req.body;
   // Validate request
   // Access data
-  const sql = buildGroupsUpdateSql();
+  const query = buildGroupsUpdateQuery(record, id);
   console.log(sql);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await UpdateGroups(sql, id, record);
+  } = await UpdateGroups(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
@@ -607,13 +611,13 @@ const putUsersController = async (req, res) => {
   const record = req.body;
   // Validate request
   // Access data
-  const sql = buildUsersUpdateSql();
+  const query = buildUsersUpdateQuery(record, id);
   console.log(sql);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await UpdateUsers(sql, id, record);
+  } = await UpdateUsers(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
@@ -621,9 +625,9 @@ const putUsersController = async (req, res) => {
 };
 //=========================================================MODULES==========================================================
 
-const deleteModules = async (sql, id) => {
+const deleteModules = async (deleteQuery) => {
   try {
-    const status = await database.query(sql, { moduleID: id });
+    const status = await database.query(deleteQuery.sql, deleteQuery.data);
 
     return status[0].affectedRows === 0
       ? {
@@ -845,9 +849,9 @@ const createGroups = async (sql, record) => {
 
 //====================================USERS==============================================================================
 
-const UpdateUsers = async (sql, id, record) => {
+const UpdateUsers = async (updateQuery) => {
   try {
-    const status = await database.query(sql, { ...record, userID: id });
+    const status = await database.query(updateQuery.sql, updateQuery.data);
 
     if (status[0].affectedRows === 0) {
       return {
@@ -857,9 +861,13 @@ const UpdateUsers = async (sql, id, record) => {
       };
     }
 
-    const recoverRecordSql = buildUsersSelectSql(id, null);
+    const readQuery = buildUsersReadQuery(
+      updateQuery.sql,
+      updateQuery.data,
+      null
+    );
 
-    const { isSuccess, result, message } = await read(recoverRecordSql);
+    const { isSuccess, result, message } = await read(readQuery);
 
     return isSuccess
       ? {
