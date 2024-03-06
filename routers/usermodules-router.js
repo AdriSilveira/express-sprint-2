@@ -3,6 +3,12 @@ import database from "../database.js";
 
 const router = Router();
 //Query Builders-------------------------------------------------------
+const buildSetFields = (fields) =>
+  fields.reduce(
+    (setSQL, field, index) =>
+      setSQL + `${field}=:${field}` + (index === fields.length - 1 ? "" : ", "),
+    "SET "
+  );
 const buildUserModuleCreateQuery = (record) => {
   let table = "UserModule";
   let mutableFields = ["userModuleID", "userID", "moduleID"];
