@@ -139,6 +139,7 @@ const read = async (query) => {
     };
   }
 };
+
 const updateModules = async (updateQuery) => {
   try {
     const status = await database.query(updateQuery.sql, updateQuery.data);
@@ -150,7 +151,6 @@ const updateModules = async (updateQuery) => {
         message: "Failed to update record: no rows affected",
       };
     }
-
     const readQuery = buildModulesReadQuery(updateQuery.data.moduleID, null);
     const { isSuccess, result, message } = await read(readQuery);
 
@@ -173,6 +173,7 @@ const updateModules = async (updateQuery) => {
     };
   }
 };
+
 const deleteModules = async (deleteQuery) => {
   try {
     const status = await database.query(deleteQuery.sql, deleteQuery.data);
@@ -198,7 +199,6 @@ const deleteModules = async (deleteQuery) => {
 };
 
 //Controllers-------------------------------------------------------
-
 const getModulesController = async (req, res, variant) => {
   const id = req.params.id;
   try {
@@ -232,7 +232,6 @@ const getModulesController = async (req, res, variant) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 const postModulesController = async (req, res) => {
   const record = req.body;
   // Validate request
@@ -249,7 +248,6 @@ const postModulesController = async (req, res) => {
   // Response to request
   res.status(201).json(result);
 };
-
 const putModulesController = async (req, res) => {
   const id = req.params.id;
   const record = req.body;
@@ -267,7 +265,6 @@ const putModulesController = async (req, res) => {
   // Response to request
   res.status(200).json(result);
 };
-
 const deleteModulesController = async (req, res) => {
   const id = req.params.id;
   // Validate request
