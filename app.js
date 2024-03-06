@@ -1,7 +1,7 @@
 import express, { query } from "express";
 import cors from "cors";
 import database from "./database.js";
-import { Query } from "mysql2/typings/mysql/lib/protocol/sequences/Query.js";
+
 //====================CHANGES HERE UPDATED THE PUT/UPDATE STATUS ==================
 // Configure express app -------------------------
 const app = new express();
@@ -31,7 +31,7 @@ const buildSetFields = (fields) =>
     "SET "
   );
 
-const buildModulesDeleteQuery = () => {
+const buildModulesDeleteQuery = (id) => {
   let table = "Modules";
   const sql = `DELETE FROM  ${table} 
       WHERE moduleID=:moduleID`;
@@ -74,6 +74,11 @@ const buildModulesReadQuery = (id, variant) => {
   let sql = "";
 
   switch (variant) {
+    default:
+      sql = `SELECT ${fields} FROM ${table}`;
+      if (id) sql += ` WHERE moduleID=:ID`;
+      break;
+
     case "leader":
       sql = `SELECT ${fields} FROM ${table} WHERE moduleLeaderID=:ID`;
       break;
@@ -81,9 +86,10 @@ const buildModulesReadQuery = (id, variant) => {
       table = `UserModule INNER JOIN ${table} ON UserModule.userModuleID=Modules.moduleID`;
       sql = `SELECT ${fields} FROM ${table} WHERE userModuleID=:ID`;
       break;
-    default:
-      const sql = `SELECT ${fields} FROM ${table}`;
-      if (id) sql += ` WHERE moduleID=:ID`;
+    case "modules":
+      sql = `SELECT ${fields} FROM ${table}`;
+      console.log("test test" + sql);
+      break;
   }
 
   return { sql, data: { ID: id } };
@@ -129,7 +135,7 @@ const buildUserModuleReadQuery = (id, variant) => {
 //console.log("generated SQL:" + sql);
 //console.log("Data:", { ID: id });
 
-const buildUserModuleCreateQuery = () => {
+const buildUserModuleCreateQuery = (record) => {
   let table = "UserModule";
   let mutableFields = ["userModuleID", "userID", "moduleID"];
   const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
@@ -204,7 +210,7 @@ const buildUsersReadQuery = (id, variant) => {
   return { sql, data: { ID: id } };
 };
 
-const buildUsersDeleteQuery = () => {
+const buildUsersDeleteQuery = (id) => {
   let table = "Users";
   const sql = `DELETE FROM  ${table} 
       WHERE userID=:userID`;
@@ -314,13 +320,13 @@ const buildGroupsUpdateQuery = (record, id) => {
   }
   return { sql, data: { ...record, userID: id } };
 };
-const buildGroupsDeleteQuery = () => {
+const buildGroupsDeleteQuery = (id) => {
   let table = "Groups";
   const sql = `DELETE FROM  ${table} 
       WHERE groupID=:groupID`;
   return { sql, data: { groupID: id } };
 };
-const buildGroupsCreateQuery = () => {
+const buildGroupsCreateQuery = (record) => {
   let table = "Groups";
   let mutableFields = [
     "groupID",
@@ -360,12 +366,12 @@ const postGroupsController = async (req, res) => {
   // Validate request
 
   // Access data
-  const sql = buildGroupsSelectSql();
+  const sql = buildGroupsCreateQuery(record);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await createGroups(sql, record);
+  } = await createGroups(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
@@ -497,8 +503,11 @@ const getModulesController = async (req, res, variant) => {
     const offset = (page - 1) * pageSize;
 
     // Access data
-    const query =
-      buildModulesReadQuery(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
+    console.log(id);
+    console.log("test variant" + variant);
+    const query = buildModulesReadQuery(id, variant);
+    // buildModulesReadQuery(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
+    console.log("test query" + query);
     const { isSuccess, result, message: accessorMessage } = await read(query);
 
     if (!isSuccess) {
@@ -637,7 +646,7 @@ const deleteModules = async (deleteQuery) => {
       ? {
           isSuccess: false,
           result: null,
-          message: `Failed to delete record: ${id}`,
+          message: `Failed to delete record: ${deleteQuery.data.moduleID}`,
         }
       : {
           isSuccess: true,
@@ -764,15 +773,15 @@ const createUserModule = async (createQuery) => {
   }
 };
 //=============================================GROUPS===================================================================
-const deleteGroups = async (sql, id) => {
+const deleteGroups = async (deleteQuery) => {
   try {
-    const status = await database.query(sql, { groupID: id });
+    const status = await database.query(deleteQuery.sql, deleteQuery.data);
 
     return status[0].affectedRows === 0
       ? {
           isSuccess: false,
           result: null,
-          message: `Failed to delete record: ${id}`,
+          message: `Failed to delete record: ${deleteQuery.data.groupID}`,
         }
       : {
           isSuccess: true,
@@ -919,15 +928,15 @@ const createUsers = async (createQuery) => {
     };
   }
 };
-const deleteUsers = async (sql, id) => {
+const deleteUsers = async (deleteQuery) => {
   try {
-    const status = await database.query(sql, { userID: id });
+    const status = await database.query(deleteQuery.sql, deleteQuery.data);
 
     return status[0].affectedRows === 0
       ? {
           isSuccess: false,
           result: null,
-          message: `Failed to delete record: ${id}`,
+          message: `Failed to delete record: ${deleteQuery.data.userID}`,
         }
       : {
           isSuccess: true,
@@ -946,7 +955,9 @@ const deleteUsers = async (sql, id) => {
 // ----------------------------Endpoints -------------------------------------
 
 //MODULES
-app.get("/api/modules", (req, res) => getModulesController(req, res));
+app.get("/api/modules", (req, res) =>
+  getModulesController(req, res, "modules")
+);
 app.get("/api/modules/:id", (req, res) => getModulesController(req, res, null));
 app.get("/api/modules/leader/:id", (req, res) =>
   getModulesController(req, res, "leader")
