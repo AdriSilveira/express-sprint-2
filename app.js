@@ -82,7 +82,7 @@ const buildModulesReadQuery = (id, variant) => {
       sql = `SELECT ${fields} FROM ${table} WHERE userModuleID=:ID`;
       break;
     default:
-      sql = `SELECT ${fields} FROM ${table}`;
+      const sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE moduleID=:ID`;
   }
 
@@ -121,7 +121,7 @@ const buildUserModuleReadQuery = (id, variant) => {
 
   switch (variant) {
     default:
-      sql = `SELECT ${fields.join(", ")} FROM ${table}`;
+      const sql = `SELECT ${fields.join(", ")} FROM ${table}`;
       if (id) sql += ` WHERE UserModule.userModuleID=:ID`;
   }
   return { sql, data: { ID: id } };
@@ -204,10 +204,11 @@ const buildUsersReadQuery = (id, variant) => {
   return { sql, data: { ID: id } };
 };
 
-const buildUsersDeleteSql = () => {
+const buildUsersDeleteQuery = () => {
   let table = "Users";
-  return `DELETE FROM  ${table} 
+  const sql = `DELETE FROM  ${table} 
       WHERE userID=:userID`;
+  return { sql, data: { userID: id } };
 };
 const buildUsersUpdateQuery = (record, id) => {
   let table = "Users";
@@ -313,12 +314,13 @@ const buildGroupsUpdateQuery = (record, id) => {
   }
   return { sql, data: { ...record, userID: id } };
 };
-const buildGroupsDeleteSql = () => {
+const buildGroupsDeleteQuery = () => {
   let table = "Groups";
-  return `DELETE FROM  ${table} 
+  const sql = `DELETE FROM  ${table} 
       WHERE groupID=:groupID`;
+  return { sql, data: { groupID: id } };
 };
-const buildGroupsInsertSql = () => {
+const buildGroupsCreateQuery = () => {
   let table = "Groups";
   let mutableFields = [
     "groupID",
@@ -329,7 +331,8 @@ const buildGroupsInsertSql = () => {
     "assessmentID",
   ];
 
-  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  return { sql, data: record };
 };
 
 // =========================================POST CONTROLLERS =====================================
@@ -408,8 +411,9 @@ const postUserModuleController = async (req, res) => {
 //================================DELETE CONTROLLERS=============================================
 // DELETE MODULES
 const deleteModulesController = async (req, res) => {
-  // Validate request
   const id = req.params.id;
+  // Validate request
+
   // Access data
   const query = buildModulesDeleteQuery(id);
   console.log("SQL for delete operation:", sql);
@@ -431,18 +435,18 @@ const deleteModulesController = async (req, res) => {
 
 //DELETE GROUPS
 const deleteGroupsController = async (req, res) => {
-  // Validate request
   const id = req.params.id;
+  // Validate request
 
   // Access data
-  const sql = buildGroupsSelectSql();
+  const query = buildGroupsDeleteQuery(id);
   console.log("SQL for delete operation:", sql);
 
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await deleteGroups(sql, id);
+  } = await deleteGroups(query);
   if (!isSuccess) {
     console.error("Error deleting group: ", accessorMessage);
     return res.status(400).json({ message: accessorMessage });
@@ -455,18 +459,18 @@ const deleteGroupsController = async (req, res) => {
 
 //DELETE USERS
 const deleteUsersController = async (req, res) => {
-  // Validate request
   const id = req.params.id;
+  // Validate request
 
   // Access data
-  const sql = buildUsersSelectSql();
+  const query = buildUsersDeleteQuery(id);
   console.log("SQL for delete operation:", sql);
 
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await deleteUsers(sql, id);
+  } = await deleteUsers(query);
   if (!isSuccess) {
     console.error("Error deleting user: ", accessorMessage);
     return res.status(400).json({ message: accessorMessage });
