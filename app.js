@@ -1,11 +1,4 @@
-// Imports --------------Connected with GIT-------------------------ADRIII
-// process.on("uncaughtException", (err) => {
-//   console.error("Uncaught Exception:", err.message);
-//   console.error(err.stack);
-//   process.exit(1);
-// });
-
-import express from "express";
+import express, { query } from "express";
 import cors from "cors";
 import database from "./database.js";
 //====================CHANGES HERE UPDATED THE PUT/UPDATE STATUS ==================
@@ -43,7 +36,7 @@ const buildModulesDeleteSql = () => {
       WHERE moduleID=:moduleID`;
 };
 //Building modules without the ID what will be added automacally by the database
-const buildModulesUpdateSql = () => {
+const buildModulesUpdateQuery = (record, id) => {
   let table = "Modules";
   let mutableFields = [
     // "moduleID",REMOVE NOT NEEDED
@@ -55,15 +48,14 @@ const buildModulesUpdateSql = () => {
     "moduleImageURL",
   ];
 
-  return (
-    // "UPDATE Modules "
+  const sql =
     `UPDATE ${table} ` +
     buildSetFields(mutableFields) +
-    ` WHERE moduleID=:moduleID`
-  );
+    ` WHERE moduleID=:moduleID`;
+  return { sql, data: { ...record, moduleID: id } };
 };
 
-const buildModulesSelectSql = (id, variant) => {
+const buildModulesReadQuery = (id, variant) => {
   let table =
     "((Modules LEFT JOIN Users ON moduleLeaderID=userID) LEFT JOIN Years ON moduleYearID=yearID)";
   let fields = [
@@ -92,10 +84,10 @@ const buildModulesSelectSql = (id, variant) => {
       if (id) sql += ` WHERE moduleID=:ID`;
   }
 
-  return sql;
+  return { sql, data: { ID: id } };
 };
 
-const buildModulesInsertSql = () => {
+const buildModulesCreateQuery = (record) => {
   let table = "Modules";
   let mutableFields = [
     "moduleID",
@@ -108,18 +100,19 @@ const buildModulesInsertSql = () => {
     "moduleImageURL",
   ];
 
-  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  return { sql, data: record };
 };
 
 //================================================USERMODULE=================================================
-const buildUserModuleSelectSql = (id, variant) => {
+const buildUserModuleReadQuery = (id, variant) => {
   let table =
     "(UserModule LEFT JOIN Users ON UserModuleUserID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
   let fields = [
     "userModuleID",
-    "UserModule.moduleID AS userModuleModuleID",
+    "UserModulemoduleID",
     'CONCAT(Modules.moduleCode," ",Modules.moduleName) AS moduleName',
-    "Users.userID as UserUserID",
+    "UserModuleuserID",
     'CONCAT(Users.userFirstName," ",Users.userLastName) AS userName',
   ];
   let sql = "";
@@ -129,17 +122,20 @@ const buildUserModuleSelectSql = (id, variant) => {
       sql = `SELECT ${fields.join(", ")} FROM ${table}`;
       if (id) sql += ` WHERE UserModule.userModuleID=:ID`;
   }
-  return sql;
+  return { sql, data: { ID: id } };
 };
+//console.log("generated SQL:" + sql);
+//console.log("Data:", { ID: id });
 
-const buildUserModuleInsertSql = () => {
+const buildUserModuleCreateQuery = () => {
   let table = "UserModule";
   let mutableFields = ["userModuleID", "userID", "moduleID"];
-  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  return { sql, data: record };
 };
 
 //================================================USERS=================================================
-const buildUsersSelectSql = (id, variant) => {
+const buildUsersReadQuery = (id, variant) => {
   let table = "Users";
   let fields = [
     "userID",
@@ -203,7 +199,7 @@ const buildUsersSelectSql = (id, variant) => {
       sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE userID=:ID`;
   }
-  return sql;
+  return { sql, data: { ID: id } };
 };
 
 const buildUsersDeleteSql = () => {
@@ -229,7 +225,7 @@ const buildUsersUpdateSql = (id, variant) => {
     `UPDATE ${table} ` + buildSetFields(mutableFields) + ` WHERE userID=:userID`
   );
 };
-const buildUsersInsertSql = () => {
+const buildUsersCreateQuery = (record) => {
   let table = "Users";
   let mutableFields = [
     "userID",
@@ -242,11 +238,12 @@ const buildUsersInsertSql = () => {
     "userImageURL",
   ];
 
-  return `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  return { sql, data: record };
 };
 
 //================================================YEARS=================================================
-const buildYearsSelectSql = (id, variant) => {
+const buildYearsReadQuery = (id, variant) => {
   let table = "Years";
   let fields = ["yearID", "yearName"];
   let sql = "";
@@ -257,10 +254,10 @@ const buildYearsSelectSql = (id, variant) => {
       if (id) sql += ` WHERE moduleID=:ID`;
   }
 
-  return sql;
+  return { sql, data: { ID: id } };
 };
 //================================================GROUPS=================================================
-const buildGroupsSelectSql = (id, variant) => {
+const buildGroupsReadQuery = (id, variant) => {
   let table = "Groups";
   let fields = [
     "groupID",
@@ -284,7 +281,7 @@ const buildGroupsSelectSql = (id, variant) => {
       sql = `SELECT ${fields2} FROM Groups INNER JOIN Modules ON Groups.moduleID=Modules.moduleID WHERE Groups.moduleID=:ID `;
       break;
   }
-  return sql;
+  return { sql, data: { ID: id } };
 };
 
 const buildGroupsUpdateSql = (id, variant) => {
@@ -338,12 +335,12 @@ const postModulesController = async (req, res) => {
   // Validate request
 
   // Access data
-  const sql = buildModulesInsertSql();
+  const query = buildModulesCreateQuery(record);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await createModules(sql, record);
+  } = await createUserModule(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
@@ -374,12 +371,12 @@ const postUsersController = async (req, res) => {
   // Validate request
 
   // Access data
-  const sql = buildUsersInsertSql();
+  const query = buildUsersCreateQuery(record);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await createUsers(sql, record);
+  } = await createUsers(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
@@ -392,7 +389,7 @@ const postUserModuleController = async (req, res) => {
   // Validate request
 
   // Access data
-  const sql = buildUserModuleInsertSql();
+  const query = buildUserModuleCreateQuery(record);
   const {
     isSuccess,
     result,
@@ -404,7 +401,7 @@ const postUserModuleController = async (req, res) => {
   res.status(201).json(result);
 };
 
-//=================================DELETE CONTROLLERS===============================================
+//================================DELETE CONTROLLERS=============================================
 // DELETE MODULES
 const deleteModulesController = async (req, res) => {
   // Validate request
@@ -476,7 +473,7 @@ const deleteUsersController = async (req, res) => {
   res.status(200).json({ message: accessorMessage });
 };
 
-//===========================================GET CONTROLLERS================================================
+//========================================GET CONTROLLERS==========================================
 //GET MODULES
 const getModulesController = async (req, res, variant) => {
   const id = req.params.id;
@@ -492,9 +489,9 @@ const getModulesController = async (req, res, variant) => {
     const offset = (page - 1) * pageSize;
 
     // Access data
-    const sql =
-      buildModulesSelectSql(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
-    const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+    const query =
+      buildModulesReadQuery(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
+    const { isSuccess, result, message: accessorMessage } = await read(query);
 
     if (!isSuccess) {
       console.error("Error in accessing data:", accessorMessage);
@@ -515,8 +512,8 @@ const getGroupsController = async (req, res, variant) => {
   //Validate reques
 
   // Access data
-  const sql = buildGroupsSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  const query = buildGroupsReadQuery(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
@@ -530,8 +527,8 @@ const getUsersController = async (req, res, variant) => {
   // Validate request
   console.log("This is test" + id, variant);
   // Access data
-  const sql = buildUsersSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  const query = buildUsersReadQuery(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
@@ -544,8 +541,8 @@ const getUserModuleController = async (req, res, variant) => {
   // Validate request
 
   // Access data
-  const sql = buildUserModuleSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  const query = buildUserModuleReadQuery(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
@@ -557,8 +554,8 @@ const getYearsController = async (req, res, variant) => {
   // Validate request
 
   // Access data
-  const sql = buildYearsSelectSql(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
+  const query = buildYearsReadQuery(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   // Response to request
@@ -572,13 +569,13 @@ const putModulesController = async (req, res) => {
   const record = req.body;
   // Validate request
   // Access data
-  const sql = buildModulesUpdateSql();
+  const query = buildModulesUpdateQuery(record, id);
   console.log(sql);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await UpdateModules(sql, id, record);
+  } = await UpdateModules(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
@@ -648,9 +645,9 @@ const deleteModules = async (sql, id) => {
   }
 };
 
-const UpdateModules = async (sql, id, record) => {
+const UpdateModules = async (updateQuery) => {
   try {
-    const status = await database.query(sql, { ...record, moduleID: id });
+    const status = await database.query(updateQuery.sql, updateQuery.data);
 
     if (status[0].affectedRows === 0) {
       return {
@@ -660,8 +657,8 @@ const UpdateModules = async (sql, id, record) => {
       };
     }
 
-    const recoverRecordSql = buildModulesSelectSql(id, null);
-    const { isSuccess, result, message } = await read(recoverRecordSql);
+    const readQuery = buildModulesReadQuery(updateQuery.data.moduleID, null);
+    const { isSuccess, result, message } = await read(readQuery);
 
     return isSuccess
       ? {
@@ -682,13 +679,13 @@ const UpdateModules = async (sql, id, record) => {
     };
   }
 };
-const createModules = async (sql, record) => {
+const createModules = async (createQuery) => {
   try {
-    const status = await database.query(sql, record);
+    const status = await database.query(createQuery.sql, createQuery.data);
 
-    const recoverRecordSql = buildModulesSelectSql(status[0].insertId, null);
+    const readQuery = buildModulesReadQuery(status[0].insertId, null);
 
-    const { isSuccess, result, message } = await read(recoverRecordSql);
+    const { isSuccess, result, message } = await read(readQuery);
 
     return isSuccess
       ? {
@@ -710,9 +707,9 @@ const createModules = async (sql, record) => {
   }
 };
 
-const read = async (sql, id) => {
+const read = async (query) => {
   try {
-    const [result] = await database.query(sql, { ID: id });
+    const [result] = await database.query(query.sql, query.data);
     return result.length === 0
       ? { isSuccess: false, result: null, message: "No record(s) found" }
       : {
@@ -729,15 +726,15 @@ const read = async (sql, id) => {
   }
 };
 
-//=============================================GROUPSMEMBERS===================================================================
+//=============================================USERMODULE===================================================================
 
-const createUserModule = async (sql, record) => {
+const createUserModule = async (createQuery) => {
   try {
-    const status = await database.query(sql, record);
+    const status = await database.query(createQuery.sql, createQuery.data);
 
-    const recoverRecordSql = buildUserModuleSelectSql(status[0].insertId, null);
+    const readQuery = buildUserModuleReadQuery(status[0].insertId, null);
 
-    const { isSuccess, result, message } = await read(recoverRecordSql);
+    const { isSuccess, result, message } = await read(readQuery);
 
     return isSuccess
       ? {
@@ -883,13 +880,13 @@ const UpdateUsers = async (sql, id, record) => {
     };
   }
 };
-const createUsers = async (sql, record) => {
+const createUsers = async (createQuery) => {
   try {
-    const status = await database.query(sql, record);
+    const status = await database.query(createQuery.sql, createQuery.data);
 
-    const recoverRecordSql = buildUsersSelectSql(status[0].insertId, null);
+    const readQuery = buildUsersReadQuery(status[0].insertId, null);
 
-    const { isSuccess, result, message } = await read(recoverRecordSql);
+    const { isSuccess, result, message } = await read(readQuery);
 
     return isSuccess
       ? {
