@@ -227,6 +227,8 @@ const deleteGroupsController = async (req, res) => {
 };
 const getGroupsController = async (req, res, variant) => {
   const id = req.params.id;
+
+  console.log("Hello World");
   //Validate reques
 
   // Access data
@@ -237,6 +239,7 @@ const getGroupsController = async (req, res, variant) => {
   // Response to request
   res.status(200).json(result);
 };
+
 const putGroupsController = async (req, res) => {
   const id = req.params.id;
   const record = req.body;

@@ -3,9 +3,9 @@ import cors from "cors";
 import database from "./database.js";
 import modulesRouter from "./routers/modules-router.js";
 import usersRouter from "./routers/users-router.js";
-import groupsRouter from "./routers/modules-router.js";
+import groupsRouter from "./routers/groups-router.js";
 import usermoduleRouter from "./routers/usermodules-router.js";
-import yearsRouter from "./routers/usermodules-router.js";
+import yearsRouter from "./routers/years-router.js";
 
 //====================CHANGES HERE UPDATED THE PUT/UPDATE STATUS ==================
 // Configure express app -------------------------

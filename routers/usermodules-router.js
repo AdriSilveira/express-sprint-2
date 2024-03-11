@@ -18,19 +18,19 @@ const buildUserModuleCreateQuery = (record) => {
 
 const buildUserModuleReadQuery = (id, variant) => {
   let table =
-    "(UserModule LEFT JOIN Users ON UserModuleUserID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
+    "(UserModule LEFT JOIN Users ON UserModule.userID = Users.userID) LEFT JOIN Modules ON UserModule.moduleID = Modules.moduleID";
   let fields = [
     "userModuleID",
-    "UserModulemoduleID",
+    "UserModule.moduleID",
     'CONCAT(Modules.moduleCode," ",Modules.moduleName) AS moduleName',
-    "UserModuleuserID",
+    "UserModule.userID",
     'CONCAT(Users.userFirstName," ",Users.userLastName) AS userName',
   ];
   let sql = "";
 
   switch (variant) {
     default:
-      const sql = `SELECT ${fields.join(", ")} FROM ${table}`;
+      sql = `SELECT ${fields.join(", ")} FROM ${table}`;
       if (id) sql += ` WHERE UserModule.userModuleID=:ID`;
   }
   return { sql, data: { ID: id } };

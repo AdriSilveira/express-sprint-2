@@ -302,6 +302,7 @@ const deleteUsersController = async (req, res) => {
 //Endpoints-------------------------------------------------------
 router.get("/", (req, res) => getUsersController(req, res, null));
 router.get("/:id(\\d+)", (req, res) => getUsersController(req, res, null));
+router.get("/groups/:id", (req, res) => getUsersController(req, res, "groups"));
 router.post("/", postUsersController);
 router.put("/:id", putUsersController);
 router.delete("/:id", deleteUsersController);
