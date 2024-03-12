@@ -6,6 +6,7 @@ import usersRouter from "./routers/users-router.js";
 import groupsRouter from "./routers/groups-router.js";
 import usermoduleRouter from "./routers/usermodules-router.js";
 import yearsRouter from "./routers/years-router.js";
+import recipesRouter from "./routers/recipes-router.js";
 
 //====================CHANGES HERE UPDATED THE PUT/UPDATE STATUS ==================
 // Configure express app -------------------------
@@ -43,6 +44,9 @@ app.use("/api/years", yearsRouter);
 app.use("/api/usermodule", usermoduleRouter);
 //Contribution
 //Assessments
+
+//MAD=Recipefinder
+app.use("/api/recipes", recipesRouter);
 
 // Start server ----------------------------------
 const PORT = process.env.PORT || 5000;
