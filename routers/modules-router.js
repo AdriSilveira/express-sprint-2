@@ -19,7 +19,6 @@ const buildModulesCreateQuery = (record) => {
     "moduleLevel",
     "moduleYearID",
     "moduleLeaderID",
-    //"moduleLeaderName",
     "moduleImageURL",
   ];
 
