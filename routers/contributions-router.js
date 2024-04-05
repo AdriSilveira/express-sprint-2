@@ -12,8 +12,14 @@ const buildSetFields = (fields) =>
   );
 
 const buildContributionsReadQuery = (id, variant) => {
-  let table = "";
-  let fields = ["contributionID"];
+  let table = "Contributions";
+  let fields = [
+    "contributionID",
+    "contributionName",
+    "contributionFutureTasks",
+    "submissionDate",
+    "groupID",
+  ];
   // let sql = "";
   let sql = `SELECT ${fields} FROM ${table}`;
   if (id) sql += ` WHERE contributionID=:ID`;
@@ -24,7 +30,13 @@ const buildContributionsReadQuery = (id, variant) => {
 };
 const buildContributionsCreateQuery = (record) => {
   let table = "Contributions";
-  let mutableFields = ["contributionID"];
+  let mutableFields = [
+    "contributionID",
+    "contributionName",
+    "contributionFutureTasks",
+    "submissionDate",
+    "groupID",
+  ];
 
   const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
   return { sql, data: record };
@@ -32,7 +44,13 @@ const buildContributionsCreateQuery = (record) => {
 
 const buildContributionsUpdateQuery = (record, id) => {
   let table = "Contributions";
-  let mutableFields = ["contributionID"];
+  let mutableFields = [
+    "contributionID",
+    "contributionName",
+    "contributionFutureTasks",
+    "submissionDate",
+    "groupID",
+  ];
   const sql =
     `UPDATE ${table} ` +
     buildSetFields(mutableFields) +

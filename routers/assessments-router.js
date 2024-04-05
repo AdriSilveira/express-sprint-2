@@ -47,7 +47,7 @@ const buildAssessmentsReadQuery = (id, variant) => {
 
   switch (variant) {
     default:
-      sql = `SELECT ${fields} FROM ${table}`;
+      let sql = `SELECT ${fields} FROM ${table}`;
       if (id) sql += ` WHERE assessmentID=:ID`;
   }
 
@@ -57,7 +57,6 @@ const buildAssessmentsReadQuery = (id, variant) => {
 const buildAssessmentsUpdateQuery = (record, id) => {
   let table = "Assessments";
   let mutableFields = [
-    "assessmentID",
     "assessmentName",
     "assessmentPercentage",
     "assessmentPublishDate",
@@ -208,11 +207,11 @@ const getAssessmentsController = async (req, res, variant) => {
     const offset = (page - 1) * pageSize;
 
     // Access data
-    console.log(id);
+    //console.log(id);
     console.log("test variant" + variant);
     const query = buildAssessmentsReadQuery(id, variant);
     // build ReadQuery(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
-    console.log("test query" + query);
+    //console.log("test query" + query);
     const { isSuccess, result, message: accessorMessage } = await read(query);
 
     if (!isSuccess) {
@@ -274,7 +273,7 @@ const deleteAssessmentsController = async (req, res) => {
     message: accessorMessage,
   } = await deleteAssessments(query);
   if (!isSuccess) {
-    console.error("Error delting module: ", accessorMessage);
+    console.error("Error deleting Assessment: ", accessorMessage);
     return res.status(400).json({ message: accessorMessage });
   }
 
@@ -284,7 +283,9 @@ const deleteAssessmentsController = async (req, res) => {
 };
 
 //Endpoints-------------------------------------------------------
-router.get("/", (req, res) => getAssessmentsController(req, res, "assessment"));
+router.get("/", (req, res) =>
+  getAssessmentsController(req, res, "assessments")
+);
 router.get("/:id", (req, res) => getAssessmentsController(req, res, null));
 
 //router.get("/users/:id", (req, res) => getAssessmentsController(req, res, "users"));

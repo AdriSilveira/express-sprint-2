@@ -9,6 +9,8 @@ import yearsRouter from "./routers/years-router.js";
 import recipesRouter from "./routers/recipes-router.js";
 import assessmentsRouter from "./routers/assessments-router.js";
 import homeworksRouter from "./routers/homeworks-router.js";
+import contributionsRouter from "./routers/contributions-router.js";
+import groupMemberAttendanceRouter from "./routers/groupMemberAttendance-router.js";
 
 //====================CHANGES HERE UPDATED THE PUT/UPDATE STATUS ==================
 // Configure express app -------------------------
@@ -38,21 +40,18 @@ app.use("/api/modules", modulesRouter);
 app.use("/api/users", usersRouter);
 //GROUPS
 app.use("/api/groups", groupsRouter);
-
 //YEARS
 app.use("/api/years", yearsRouter);
-
 //USERMODULE
 app.use("/api/usermodule", usermoduleRouter);
-
 //HOMEWORKS
 app.use("/api/homeworks", homeworksRouter);
-
 //Contribution
 app.use("/api/contributions", contributionsRouter);
-
 //Assessments
 app.use("/api/assessments", assessmentsRouter);
+//GroupMemberAttendance
+app.use("/api/groupMemberAttendanceRouter", groupMemberAttendanceRouter);
 
 //MAD=Recipefinder
 app.use("/api/recipes", recipesRouter);
