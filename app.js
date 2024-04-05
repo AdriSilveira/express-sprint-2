@@ -12,7 +12,7 @@ import homeworksRouter from "./routers/homeworks-router.js";
 import contributionsRouter from "./routers/contributions-router.js";
 import groupMemberAttendanceRouter from "./routers/groupMemberAttendance-router.js";
 import groupAssessmentRouter from "./routers/groupAssessment-router.js";
-
+import groupMemberRouter from "./routers/groupMembers-router.js";
 //====================CHANGES HERE UPDATED THE PUT/UPDATE STATUS ==================
 // Configure express app -------------------------
 const app = new express();
@@ -55,6 +55,8 @@ app.use("/api/assessments", assessmentsRouter);
 app.use("/api/groupMemberAttendance", groupMemberAttendanceRouter);
 //GroupsAssessement
 app.use("/api/groupAssessment", groupAssessmentRouter);
+//GroupMember
+app.use("/api/groupMember", groupMemberRouter);
 
 //MAD=Recipefinder
 app.use("/api/recipes", recipesRouter);

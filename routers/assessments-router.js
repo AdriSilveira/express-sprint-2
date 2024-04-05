@@ -202,7 +202,7 @@ const getAssessmentsController = async (req, res, variant) => {
     }
     // with this code I aim controlling the number of data is being display in the interface.
     const page = req.query && req.query.page ? parseInt(req.query.page) : 1;
-    const pageSize = parseInt(req.query.pageSize) || 15;
+    const pageSize = parseInt(req.query.pageSize) || 12;
 
     const offset = (page - 1) * pageSize;
 
