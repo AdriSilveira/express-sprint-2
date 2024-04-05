@@ -49,6 +49,7 @@ app.use("/api/usermodule", usermoduleRouter);
 app.use("/api/homeworks", homeworksRouter);
 
 //Contribution
+app.use("/api/contributions", contributionsRouter);
 
 //Assessments
 app.use("/api/assessments", assessmentsRouter);
