@@ -11,71 +11,49 @@ const buildSetFields = (fields) =>
     "SET "
   );
 
-const buildHomeworksReadQuery = (id, variant) => {
-  let table =
-    "Homeworks LEFT JOIN Users ON homeworkUserID=userID LEFT JOIN Contributions ON homeworkContributionID=contributionID";
-  let fields = [
-    "homeworkID",
-    "homeworkStatus",
-    "homeworkDescription",
-    "homeworkDate",
-    "homeworkContributionID",
-    "homeworkUserID",
-  ];
+const buildContributionsReadQuery = (id, variant) => {
+  let table = "";
+  let fields = ["contributionID"];
   // let sql = "";
   let sql = `SELECT ${fields} FROM ${table}`;
-  if (id) sql += ` WHERE homeworkID=:ID`;
+  if (id) sql += ` WHERE contributionID=:ID`;
 
   //console.log("Testing SQL" + sql);
 
   return { sql, data: { ID: id } };
 };
-const buildHomeworksCreateQuery = (record) => {
-  let table = "Homeworks";
-  let mutableFields = [
-    "homeworkID",
-    "homeworkStatus",
-    "homeworkDescription",
-    "homeworkDate",
-    "homeworkContributionID",
-    "homeworkUserID",
-  ];
+const buildContributionsCreateQuery = (record) => {
+  let table = "Contributions";
+  let mutableFields = ["contributionID"];
 
   const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
   return { sql, data: record };
 };
 
-const buildHomeworksUpdateQuery = (record, id) => {
-  let table = "Homeworks";
-  let mutableFields = [
-    "homeworkID",
-    "homeworkStatus",
-    "homeworkDescription",
-    "homeworkDate",
-    "homeworkContributionID",
-    "homeworkUserID",
-  ];
+const buildContributionsUpdateQuery = (record, id) => {
+  let table = "Contributions";
+  let mutableFields = ["contributionID"];
   const sql =
     `UPDATE ${table} ` +
     buildSetFields(mutableFields) +
-    ` WHERE homeworkID=:homeworkID`;
-  return { sql, data: { ...record, homeworkID: id } };
+    ` WHERE contributionID=:contributionID`;
+  return { sql, data: { ...record, contributionID: id } };
 };
 
 const buildHomeworksDeleteQuery = (id) => {
-  let table = "Homeworks";
+  let table = "Contributions";
   const sql = `DELETE FROM  ${table} 
-        WHERE homeworkID=:homeworkID`;
-  return { sql, data: { homeworkID: id } };
+        WHERE contributionID=:contributionID`;
+  return { sql, data: { contributionID: id } };
 };
 
 //Data Accessors-------------------------------------------------------
 
-const createHomeworks = async (createQuery) => {
+const createContributions = async (createQuery) => {
   try {
     const status = await database.query(createQuery.sql, createQuery.data);
 
-    const readQuery = buildHomeworksReadQuery(status[0].insertId, null);
+    const readQuery = buildContributionsReadQuery(status[0].insertId, null);
 
     const { isSuccess, result, message } = await read(readQuery);
 
@@ -118,7 +96,7 @@ const read = async (query) => {
   }
 };
 
-const updateHomeworks = async (updateQuery) => {
+const updateContributions = async (updateQuery) => {
   try {
     const status = await database.query(updateQuery.sql, updateQuery.data);
 
@@ -129,8 +107,8 @@ const updateHomeworks = async (updateQuery) => {
         message: "Failed to update record: no rows affected",
       };
     }
-    const readQuery = buildHomeworksReadQuery(
-      updateQuery.data.homeworkID,
+    const readQuery = buildContributionsReadQuery(
+      updateQuery.data.contributionID,
       null
     );
     const { isSuccess, result, message } = await read(readQuery);
@@ -155,7 +133,7 @@ const updateHomeworks = async (updateQuery) => {
   }
 };
 
-const deleteHomeworks = async (deleteQuery) => {
+const deleteContributions = async (deleteQuery) => {
   try {
     const status = await database.query(deleteQuery.sql, deleteQuery.data);
 
@@ -163,7 +141,7 @@ const deleteHomeworks = async (deleteQuery) => {
       ? {
           isSuccess: false,
           result: null,
-          message: `Failed to delete record: ${deleteQuery.data.homeworkID}`,
+          message: `Failed to delete record: ${deleteQuery.data.contributionID}`,
         }
       : {
           isSuccess: true,
@@ -180,7 +158,7 @@ const deleteHomeworks = async (deleteQuery) => {
 };
 
 //Controllers-------------------------------------------------------
-const getHomeworksController = async (req, res, variant) => {
+const getContributionsController = async (req, res, variant) => {
   const id = req.params.id;
   try {
     if (!res || !res.status) {
@@ -196,7 +174,7 @@ const getHomeworksController = async (req, res, variant) => {
     // Access data
     console.log(id);
     console.log("test variant" + variant);
-    const query = buildHomeworksReadQuery(id, variant);
+    const query = buildContributionsReadQuery(id, variant);
     // build ReadQuery(id, variant) + ` LIMIT ${offset}, ${pageSize}`;
     console.log("test query" + query.sql);
     const { isSuccess, result, message: accessorMessage } = await read(query);
@@ -213,69 +191,71 @@ const getHomeworksController = async (req, res, variant) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-const postHomeworksController = async (req, res) => {
+const postContributionsController = async (req, res) => {
   const record = req.body;
   // Validate request
 
   // Access data
-  const query = buildHomeworksCreateQuery(record);
+  const query = buildContributionsCreateQuery(record);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await createHomeworks(query);
+  } = await createContributions(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
   res.status(201).json(result);
 };
-const putHomeworksController = async (req, res) => {
+const putContributionsController = async (req, res) => {
   const id = req.params.id;
   const record = req.body;
   // Validate request
   // Access data
-  const query = buildHomeworksUpdateQuery(record, id);
+  const query = buildContributionsUpdateQuery(record, id);
   console.log(sql);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await updateHomeworks(query);
+  } = await updateContributions(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   // Response to request
   res.status(200).json(result);
 };
-const deleteHomeworksController = async (req, res) => {
+const deleteContributionsController = async (req, res) => {
   const id = req.params.id;
   // Validate request
 
   // Access data
-  const query = buildHomeworksDeleteQuery(id);
+  const query = buildContributionsDeleteQuery(id);
   console.log("SQL for delete operation:", sql);
 
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await deleteHomeworks(query);
+  } = await deleteContributions(query);
   if (!isSuccess) {
     console.error("Error delting module: ", accessorMessage);
     return res.status(400).json({ message: accessorMessage });
   }
 
   // Response to request
-  console.log("Homeworks deleted successfully");
+  console.log("Contribution deleted successfully");
   res.status(200).json({ message: accessorMessage });
 };
 
 //Endpoints-------------------------------------------------------
-router.get("/", (req, res) => getHomeworksController(req, res, "homeworks"));
-router.get("/:id", (req, res) => getHomeworksController(req, res, null));
+router.get("/", (req, res) =>
+  getContributionsController(req, res, "contributions")
+);
+router.get("/:id", (req, res) => getContributionsController(req, res, null));
 
 //router.get("/users/:id", (req, res) => getModulesController(req, res, "users"));
-router.post("/", postHomeworksController);
-router.put("/:id", putHomeworksController);
-router.delete("/:id", deleteHomeworksController);
+router.post("/", postContributionsController);
+router.put("/:id", putContributionsController);
+router.delete("/:id", deleteContributionsController);
 
 export default router;

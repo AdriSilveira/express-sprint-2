@@ -10,21 +10,6 @@ const buildSetFields = (fields) =>
       setSQL + `${field}=:${field}` + (index === fields.length - 1 ? "" : ", "),
     "SET "
   );
-const buildModulesCreateQuery = (record) => {
-  let table = "Modules";
-  let mutableFields = [
-    "moduleID",
-    "moduleName",
-    "moduleCode",
-    "moduleLevel",
-    "moduleYearID",
-    "moduleLeaderID",
-    "moduleImageURL",
-  ];
-
-  const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
-  return { sql, data: record };
-};
 
 const buildModulesReadQuery = (id, variant) => {
   let table =
@@ -64,6 +49,22 @@ const buildModulesReadQuery = (id, variant) => {
   return { sql, data: { ID: id } };
 };
 
+const buildModulesCreateQuery = (record) => {
+  let table = "Modules";
+  let mutableFields = [
+    "moduleID",
+    "moduleName",
+    "moduleCode",
+    "moduleLevel",
+    "moduleYearID",
+    "moduleLeaderID",
+    "moduleImageURL",
+  ];
+
+  const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  return { sql, data: record };
+};
+
 const buildModulesUpdateQuery = (record, id) => {
   let table = "Modules";
   let mutableFields = [
@@ -72,7 +73,7 @@ const buildModulesUpdateQuery = (record, id) => {
     "moduleCode",
     "moduleLevel",
     "moduleYearID",
-    "moduleLeaderID", //userModuleID
+    "moduleLeaderID",
     "moduleImageURL",
   ];
 
@@ -92,6 +93,24 @@ const buildModulesDeleteQuery = (id) => {
 
 //Data Accessors-------------------------------------------------------
 
+const read = async (query) => {
+  try {
+    const [result] = await database.query(query.sql, query.data);
+    return result.length === 0
+      ? { isSuccess: false, result: null, message: "No record(s) found" }
+      : {
+          isSuccess: true,
+          result: result,
+          message: "Record(s) successfully recovered",
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
 const createModules = async (createQuery) => {
   try {
     const status = await database.query(createQuery.sql, createQuery.data);
@@ -119,26 +138,6 @@ const createModules = async (createQuery) => {
     };
   }
 };
-
-const read = async (query) => {
-  try {
-    const [result] = await database.query(query.sql, query.data);
-    return result.length === 0
-      ? { isSuccess: false, result: null, message: "No record(s) found" }
-      : {
-          isSuccess: true,
-          result: result,
-          message: "Record(s) successfully recovered",
-        };
-  } catch (error) {
-    return {
-      isSuccess: false,
-      result: null,
-      message: `Failed to execute query: ${error.message}`,
-    };
-  }
-};
-
 const updateModules = async (updateQuery) => {
   try {
     const status = await database.query(updateQuery.sql, updateQuery.data);
@@ -172,7 +171,6 @@ const updateModules = async (updateQuery) => {
     };
   }
 };
-
 const deleteModules = async (deleteQuery) => {
   try {
     const status = await database.query(deleteQuery.sql, deleteQuery.data);

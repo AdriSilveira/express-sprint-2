@@ -37,9 +37,9 @@ const buildUsersReadQuery = (id, variant) => {
   ];
   let sql = "";
 
-  const Student = 1; // Primary key for student type in my database
-  const Staff = 2; // Primary key for staff
-  const Lecturer = 3; // Primary key for lecturer type in my database
+  const Student = 1;
+  const Staff = 2;
+  const Lecturer = 3;
   const Professor = 4;
   const Academic_Mentor = 6;
   const Module_Leader = 7;
@@ -301,6 +301,7 @@ const deleteUsersController = async (req, res) => {
 
 //Endpoints-------------------------------------------------------
 router.get("/", (req, res) => getUsersController(req, res, null));
+router.get("/staff", (req, res) => getUsersController(req, res, "leader"));
 router.get("/:id(\\d+)", (req, res) => getUsersController(req, res, null));
 router.get("/groups/:id", (req, res) => getUsersController(req, res, "groups"));
 router.post("/", postUsersController);

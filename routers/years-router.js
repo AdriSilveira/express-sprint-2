@@ -177,6 +177,23 @@ const postYearsController = async (req, res) => {
   // Response to request
   res.status(201).json(result);
 };
+const putYearsController = async (req, res) => {
+  const id = req.params.id;
+  const record = req.body;
+  // Validate request
+  // Access data
+  const query = buildYearsUpdateQuery(record, id);
+  console.log(sql);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await updateYears(query);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
+
+  // Response to request
+  res.status(200).json(result);
+};
 const deleteYearsController = async (req, res) => {
   const id = req.params.id;
   // Validate request
@@ -199,25 +216,8 @@ const deleteYearsController = async (req, res) => {
   console.log("Module deleted successfully");
   res.status(200).json({ message: accessorMessage });
 };
-const putYearsController = async (req, res) => {
-  const id = req.params.id;
-  const record = req.body;
-  // Validate request
-  // Access data
-  const query = buildYearsUpdateQuery(record, id);
-  console.log(sql);
-  const {
-    isSuccess,
-    result,
-    message: accessorMessage,
-  } = await updateYears(query);
-  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
-
-  // Response to request
-  res.status(200).json(result);
-};
 //Endpoints-------------------------------------------------------
-router.get("/", (req, res) => getYearsController(req, res, null));
+router.get("/", (req, res) => getYearsController(req, res, "years"));
 router.get("/:id", (req, res) => getYearsController(req, res, null));
 router.post("/", postYearsController);
 router.put("/:id", putYearsController);

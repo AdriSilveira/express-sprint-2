@@ -13,7 +13,6 @@ const buildSetFields = (fields) =>
 const buildAssessmentsCreateQuery = (record) => {
   let table = "Assessments";
   let mutableFields = [
-    "assessmentID",
     "assessmentName",
     "assessmentPercentage",
     "assessmentPublishDate",
