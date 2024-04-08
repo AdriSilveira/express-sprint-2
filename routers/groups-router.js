@@ -9,6 +9,20 @@ const buildSetFields = (fields) =>
       setSQL + `${field}=:${field}` + (index === fields.length - 1 ? "" : ", "),
     "SET "
   );
+const buildGroupsCreateQuery = (record) => {
+  let table = "Groups";
+  let mutableFields = [
+    "groupID",
+    "groupName",
+    "groupModuleName",
+    "currentGrade",
+    "moduleID",
+    "assessmentID",
+  ];
+
+  const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
+  return { sql, data: record };
+};
 const buildGroupsReadQuery = (id, variant) => {
   let table = "Groups";
   let fields = [
@@ -65,20 +79,6 @@ const buildGroupsDeleteQuery = (id) => {
   const sql = `DELETE FROM  ${table} 
         WHERE groupID=:groupID`;
   return { sql, data: { groupID: id } };
-};
-const buildGroupsCreateQuery = (record) => {
-  let table = "Groups";
-  let mutableFields = [
-    "groupID",
-    "groupName",
-    "groupModuleName",
-    "currentGrade",
-    "moduleID",
-    "assessmentID",
-  ];
-
-  const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
-  return { sql, data: record };
 };
 
 //Data Accessors-------------------------------------------------------

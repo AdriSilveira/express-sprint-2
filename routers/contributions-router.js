@@ -58,7 +58,7 @@ const buildContributionsUpdateQuery = (record, id) => {
   return { sql, data: { ...record, contributionID: id } };
 };
 
-const buildHomeworksDeleteQuery = (id) => {
+const buildContributionsDeleteQuery = (id) => {
   let table = "Contributions";
   const sql = `DELETE FROM  ${table} 
         WHERE contributionID=:contributionID`;

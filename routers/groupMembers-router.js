@@ -35,7 +35,7 @@ const buildGroupMemberReadQuery = (id, variant) => {
 
 const buildGroupMemberUpdateQuery = (record, id) => {
   let table = "GroupMember";
-  let mutableFields = ["groupID", "grade"];
+  let mutableFields = ["userID", "groupID", "grade"];
 
   const sql =
     `UPDATE ${table} ` +
@@ -44,7 +44,7 @@ const buildGroupMemberUpdateQuery = (record, id) => {
   return { sql, data: { ...record, groupMemberID: id } };
 };
 
-const buildModulesDeleteQuery = (id) => {
+const buildGroupMemberDeleteQuery = (id) => {
   let table = "GroupMember";
   const sql = `DELETE FROM  ${table} 
         WHERE groupMemberID=:groupMemberID`;
