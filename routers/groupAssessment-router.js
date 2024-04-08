@@ -252,7 +252,6 @@ router.get("/", (req, res) =>
   getGroupAssessmentController(req, res, "groupAssessment")
 );
 router.get("/:id", (req, res) => getGroupAssessmentController(req, res, null));
-
 router.post("/", postGroupAssessmentController);
 router.put("/:id", putGroupAssessmentController);
 router.delete("/:id", deleteGroupAssessmentController);

@@ -13,29 +13,29 @@ const buildSetFields = (fields) =>
 const buildGroupMemberCreateQuery = (record) => {
   let table = "GroupMember";
   let mutableFields = ["groupMemberID", "userID", "groupID", "grade"];
-
   const sql = `INSERT INTO ${table} ` + buildSetFields(mutableFields);
   return { sql, data: record };
 };
 
 const buildGroupMemberReadQuery = (id, variant) => {
-  let table = "GroupMember";
-  let fields = ["groupMemberID", "userID", "groupID", "grade"];
-  let sql = "";
+  let table =
+    "GroupMember LEFT JOIN Users ON GroupMember.userID = Users.userID LEFT JOIN Groups ON Groups.GroupID = GroupMember.groupID";
+  let fields = [
+    "groupMemberID",
+    "groupMember.userID",
+    "groupMember.groupID",
+    "grade",
+  ];
 
-  switch (variant) {
-    default:
-      let sql = `SELECT ${fields} FROM ${table}`;
-      if (id) sql += ` WHERE groupMemberID=:ID`;
-      break;
-  }
+  let sql = `SELECT ${fields} FROM ${table}`;
+  if (id) sql += ` WHERE groupMemberID=:ID`;
 
   return { sql, data: { ID: id } };
 };
 
 const buildGroupMemberUpdateQuery = (record, id) => {
   let table = "GroupMember";
-  let mutableFields = ["userID", "groupID", "grade"];
+  let mutableFields = ["groupID", "grade"];
 
   const sql =
     `UPDATE ${table} ` +
