@@ -27,7 +27,7 @@ const buildHomeworksCreateQuery = (record) => {
 
 const buildHomeworksReadQuery = (id, variant) => {
   let table =
-    "(Homeworks LEFT JOIN Users ON homeworkUserID=userID) LEFT JOIN Contribution ON homeworkContributionID=contributionID)";
+    "Homeworks LEFT JOIN Users ON homeworkUserID=userID LEFT JOIN Contributions ON homeworkContributionID=contributionID";
   let fields = [
     "homeworkID",
     "homeworkStatus",
@@ -36,8 +36,7 @@ const buildHomeworksReadQuery = (id, variant) => {
     "homeworkContributionID",
     "homeworkUserID",
   ];
-  // let sql = "";
-  sql = `SELECT ${fields} FROM ${table}`;
+  let sql = `SELECT ${fields} FROM ${table}`;
   if (id) sql += ` WHERE homeworkID=:ID`;
   console.log("Test fields" + fields);
 

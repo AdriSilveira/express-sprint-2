@@ -30,7 +30,7 @@ const buildAssessmentsCreateQuery = (record) => {
 };
 
 const buildAssessmentsReadQuery = (id, variant) => {
-  let table = "Assessments";
+  let table = "Assessments LEFT JOIN Modules ON assessmentModuleID=moduleID";
   let fields = [
     "assessmentID",
     "assessmentName",

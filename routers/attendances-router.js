@@ -10,7 +10,7 @@ const buildSetFields = (fields) =>
       setSQL + `${field}=:${field}` + (index === fields.length - 1 ? "" : ", "),
     "SET "
   );
-const buildAssessmentsCreateQuery = (record) => {
+const buildAttendanceStatusCreateQuery = (record) => {
   let table = "AttendanceStatus";
   let mutableFields = ["attendanceStatusID", "status"];
 
@@ -18,7 +18,7 @@ const buildAssessmentsCreateQuery = (record) => {
   return { sql, data: record };
 };
 
-const buildAssessmentsReadQuery = (id, variant) => {
+const buildAttendanceStatusReadQuery = (id, variant) => {
   let table = "AttendanceStatus";
   let fields = ["attendanceStatusID", "status"];
   let sql = "";
@@ -32,7 +32,7 @@ const buildAssessmentsReadQuery = (id, variant) => {
   return { sql, data: { ID: id } };
 };
 
-const buildAssessmentsUpdateQuery = (record, id) => {
+const buildAttendanceStatusUpdateQuery = (record, id) => {
   let table = "AttendanceStatus";
   let mutableFields = ["attendanceStatusID", "status"];
 
@@ -40,14 +40,14 @@ const buildAssessmentsUpdateQuery = (record, id) => {
     `UPDATE ${table} ` +
     buildSetFields(mutableFields) +
     ` WHERE attendanceStatusID=:attendanceStatusID`;
-  return { sql, data: { ...record, assessmentID: id } };
+  return { sql, data: { ...record, attendanceStatusID: id } };
 };
 
-const buildAssessmentsDeleteQuery = (id) => {
+const buildAttendanceStatusDeleteQuery = (id) => {
   let table = "AttendanceStatus";
   const sql = `DELETE FROM  ${table} 
         WHERE attendanceStatusID=:attendanceStatusID`;
-  return { sql, data: { assessmentID: id } };
+  return { sql, data: { attendanceStatusID: id } };
 };
 
 //Data Accessors-------------------------------------------------------
@@ -111,7 +111,7 @@ const updateAttendanceStatus = async (updateQuery) => {
       };
     }
     const readQuery = buildAttendanceStatusReadQuery(
-      updateQuery.data.assessmentID,
+      updateQuery.data.attendanceStatusID,
       null
     );
     const { isSuccess, result, message } = await read(readQuery);
