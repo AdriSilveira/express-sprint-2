@@ -18,6 +18,7 @@ const buildHomeworksCreateQuery = (record) => {
     "homeworkDescription",
     "homeworkDate",
     "homeworkContributionID",
+    "homeworkName",
     "homeworkUserID",
   ];
 
@@ -34,6 +35,7 @@ const buildHomeworksReadQuery = (id, variant) => {
     "homeworkDescription",
     "homeworkDate",
     "homeworkContributionID",
+    "homeworkName",
     "homeworkUserID",
   ];
   let sql = `SELECT ${fields} FROM ${table}`;
@@ -51,6 +53,7 @@ const buildHomeworksUpdateQuery = (record, id) => {
     "homeworkDescription",
     "homeworkDate",
     "homeworkContributionID",
+    "homeworkName",
     "homeworkUserID",
   ];
   const sql =
